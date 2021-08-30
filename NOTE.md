@@ -246,3 +246,103 @@ glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 glBindVertexArray(0);
 ```
 
+# 着色器
+
+结构：
+
+```glsl
+#version version_number
+in type in_variable_name;
+in type in_variable_name;
+
+out type out_variable_name;
+
+uniform type uniform_name;
+
+int main()
+{
+  // 处理输入并进行一些图形操作
+  ...
+  // 输出处理过的结果到输出变量
+  out_variable_name = weird_stuff_we_processed;
+}
+```
+
+数据类型：int`、`float`、`double`、`uint`和`bool
+
+## 向量
+
+| 类型    | 含义                            |
+| ------- | ------------------------------- |
+| `vecn`  | 包含`n`个float分量的默认向量    |
+| `bvecn` | 包含`n`个bool分量的向量         |
+| `ivecn` | 包含`n`个int分量的向量          |
+| `uvecn` | 包含`n`个unsigned int分量的向量 |
+| `dvecn` | 包含`n`个double分量的向量       |
+
+向量的重组：
+
+```glsl
+vec2 someVec;
+vec4 differentVec = someVec.xyxx;
+vec3 anotherVec = differentVec.zyw;
+vec4 otherVec = someVec.xxxx + anotherVec.yxzy;
+```
+
+## 输入输出
+
+`in` `out`关键字
+
+顶点着色器的输入比较特殊，从顶点数据直接接收输入。使用`location`指定输入变量的，`layout (location = 0)`
+
+片段着色器的输出是vec4颜色，需要一个像素颜色，没用则默认为黑色或白色
+
+## Uniform
+
+GPU和CPU变量交互的变量
+
+```c++
+angleLocation = glGetUniformLocation(shaderProgram, "ourAngle");
+double t = glfwGetTime() / 10;
+double angle = t - int(t);
+glUniform1f(angleLocation, (float) angle);
+```
+
+另外输入多个变量是VAO的设置
+
+输入为：
+
+```c++
+// 顶点，颜色
+float vertices[] = {
+    -0.5f, -0.5f, 0.0f, 1.0f, 0, 0,
+    0.5f, -0.5f, 0.0f, 0, 1.0f, 0,
+    0.0f, 0.5f, 0.0f, 0, 0, 1.0f,
+};
+```
+
+顶点shader：
+
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+in vec3 aColor;
+out vec4 textureColor;
+
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    textureColor = vec4(aColor, 1.0);
+}
+```
+
+设置VAO：
+
+```c++
+// 输入变量索引号，0为aPos，1为aColor
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+glEnableVertexAttribArray(0);
+glEnableVertexAttribArray(1);
+```
+
