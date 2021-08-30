@@ -346,3 +346,129 @@ glEnableVertexAttribArray(0);
 glEnableVertexAttribArray(1);
 ```
 
+# 纹理
+
+纹理(texture1)
+
+纹理坐标范围为x：0到1，y：0到1，做下角为原点，纹理坐标获取颜色成为**采样**。
+
+需要指定每个顶点对应的纹理坐标，其他点的坐标通过插值得到，比如
+
+![texure](https://learnopengl-cn.github.io/img/01/06/tex_coords.png)
+
+纹理环绕方式：
+
+| 环绕方式           | 描述                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| GL_REPEAT          | 对纹理的默认行为。重复纹理图像。                             |
+| GL_MIRRORED_REPEAT | 和GL_REPEAT一样，但每次重复图片是镜像放置的。                |
+| GL_CLAMP_TO_EDGE   | 纹理坐标会被约束在0到1之间，超出的部分会重复纹理坐标的边缘，产生一种边缘被拉伸的效果。 |
+| GL_CLAMP_TO_BORDER | 超出的坐标为用户指定的边缘颜色。                             |
+
+![示例](https://learnopengl-cn.github.io/img/01/06/texture_wrapping.png)
+
+使用`glTexParameter`函数设置
+
+```c++
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+```
+
+如果使用最后一个，还需要设置边框颜色
+
+```c++
+float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+```
+
+> 无缝贴图：重复后图片和图片之间没有明显的边线
+
+## 纹理过滤
+
+纹理小物体大拉伸时的插值选项
+
+GL_LINEAR，线性过滤，计算均值，看上去物体会变得模糊
+
+GL_NEAREST，最近的值，会产生像素风格图像
+
+设置方式
+
+```c++
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+```
+
+## 多级渐远纹理
+
+由于抽样带来性能问题，对与不同距离的物体渲染采用不同大小的贴图
+
+![多级渐远纹理](https://learnopengl-cn.github.io/img/01/06/mipmaps.png)
+
+使用OpenGL函数`glGenerateMipmaps`可以创建
+
+## stb_image
+
+单头文件图像加载库
+
+```bash
+vcpkg install stb
+```
+
+```c++
+// 定义了该宏后只会包含相关的函数
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+int width, height, nrChannels;
+unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+```
+
+## 生成纹理
+
+```c++
+// 创建纹理
+GLuint texture1;
+glGenTextures(1, &texture1);
+
+// 绑定纹理
+glBindTexture(GL_TEXTURE_2D, texture1);
+
+// 载入图片
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGED_BYTE, data);
+glGenerateMipmap(GL_TEXTURE_2D);
+```
+
+- 第一个参数指定了纹理目标(Target)。设置为GL_TEXTURE_2D意味着会生成与当前绑定的纹理对象在同一个目标上的纹理（任何绑定到GL_TEXTURE_1D和GL_TEXTURE_3D的纹理不会受到影响）。
+- 第二个参数为纹理指定多级渐远纹理的级别，如果你希望单独手动设置每个多级渐远纹理的级别的话。这里我们填0，也就是基本级别。
+- 第三个参数告诉OpenGL我们希望把纹理储存为何种格式。我们的图像只有`RGB`值，因此我们也把纹理储存为`RGB`值。
+- 第四个和第五个参数设置最终的纹理的宽度和高度。我们之前加载图像的时候储存了它们，所以我们使用对应的变量。
+- 下个参数应该总是被设为`0`（历史遗留的问题）。
+- 第七第八个参数定义了源图的格式和数据类型。我们使用RGB值加载这个图像，并把它们储存为`char`(byte)数组，我们将会传入对应值。
+- 最后一个参数是真正的图像数据。
+
+## 纹理单元
+
+使用纹理单元可以在shader里面对多个纹理进行叠加运算处理
+
+```c++
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texture1);
+glActiveTexture(GL_TEXTURE1);
+glBindTexture(GL_TEXTURE_2D, texture2);
+```
+
+```glsl
+#version 330 core
+...
+
+uniform sampler2D texture2;
+uniform sampler2D texture2;
+
+void main()
+{
+    FragColor = mix(texture1(texture2, TexCoord), texture1(texture2, TexCoord), 0.2);
+}
+```
+
+
+

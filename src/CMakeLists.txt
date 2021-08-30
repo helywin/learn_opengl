@@ -1,3 +1,4 @@
 add_subdirectory(com)
-add_subdirectory(hello_triangle)
-add_subdirectory(hello_shader)
+add_subdirectory(1_triangle)
+add_subdirectory(2_shader)
+add_subdirectory(3_texture)

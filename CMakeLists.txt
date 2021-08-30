@@ -47,4 +47,6 @@ endif ()
 find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
+set(RES_DIR ${CMAKE_SOURCE_DIR}/res)
+
 add_subdirectory(src)
