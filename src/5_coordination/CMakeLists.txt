@@ -7,5 +7,11 @@ target_link_libraries(5_coordination
         com
         )
 
-target_compile_definitions(5_coordination PRIVATE -DRES_DIR="${RES_DIR}")
-target_compile_definitions(5_coordination PRIVATE -DROOT_DIR="${CMAKE_SOURCE_DIR}")
+add_executable(5_coordination_cube hello_coordination_cube.cpp)
+
+target_link_libraries(5_coordination_cube
+        ${OPENGL}
+        glfw
+        ${GLAD}
+        com
+        )

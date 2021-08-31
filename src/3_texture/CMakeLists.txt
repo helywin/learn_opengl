@@ -5,5 +5,3 @@ target_link_libraries(3_texture
         glfw
         ${GLAD}
         )
-
-target_compile_definitions(3_texture PRIVATE -DRES_DIR="${RES_DIR}")

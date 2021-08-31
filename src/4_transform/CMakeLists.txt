@@ -5,5 +5,3 @@ target_link_libraries(4_transform
         glfw
         ${GLAD}
         )
-
-target_compile_definitions(4_transform PRIVATE -DRES_DIR="${RES_DIR}")

@@ -48,12 +48,18 @@ if (WIN32)
     find_package(glad CONFIG REQUIRED)
     set(GLAD glad::glad)
     set(OPENGL opengl32)
+    add_compile_definitions(PATH_SEP="\\\\")
+    set(RES_DIR "${CMAKE_SOURCE_DIR}\\\\res")
 else()
     set(GLAD glad)
     set(OPENGL OpenGL)
+    add_compile_definitions(PATH_SEP="/")
+    set(RES_DIR "${CMAKE_SOURCE_DIR}/res")
 endif()
-find_package(glfw3 CONFIG REQUIRED)
 
-set(RES_DIR ${CMAKE_SOURCE_DIR}/res)
+add_compile_definitions(ROOT_PATH="${CMAKE_SOURCE_DIR}" RES_DIR="${RES_DIR}")
+
+
+find_package(glfw3 CONFIG REQUIRED)
 
 add_subdirectory(src)

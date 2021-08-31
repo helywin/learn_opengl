@@ -32,12 +32,10 @@ unsigned int SCR_HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint EBO;
-std::shared_ptr<Shader> shader;
+std::shared_ptr <Shader> shader;
 GLuint texture1;
 GLuint texture2;
 float transparent = 0.2f;
-
-#define RECT
 
 int main()
 {
@@ -87,25 +85,62 @@ void processInput(GLFWwindow *window)
     }
 }
 
-#ifdef RECT
-// 位置， 颜色， 纹理
+// 位置, 纹理
 float vertices[] = {
-        0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,           // 右上角
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,          // 右下角
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,         // 左下角
-        -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,          // 左上角
-};
-#else
-float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
-};
-#endif
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-unsigned int indices[] = {
-        0, 1, 3,
-        1, 2, 3
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+};
+
+glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 0.2f, -1.5f),
+        glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
 float angle = 0;
@@ -113,37 +148,33 @@ float angle = 0;
 void init()
 {
     shader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination.frag"
+            ROOT_PATH
+    PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination_cube.vert",
+            ROOT_PATH
+    PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination_cube.frag"
     );
 
     glGenBuffers(1, &VBO);
     glGenVertexArrays(1, &VAO);
-#ifdef RECT
     glGenBuffers(1, &EBO);
-#endif
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-#ifdef RECT
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-#endif
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void *) (3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                          (void *) (6 * sizeof(float)));
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
 
     // 加载时上下翻转图片
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrChannels;
-    unsigned char *data = stbi_load(RES_DIR PATH_SEP "container.jpg", &width, &height, &nrChannels,
-                                    0);
+    unsigned char *data = stbi_load(RES_DIR
+    PATH_SEP "container.jpg", &width, &height, &nrChannels,
+            0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
@@ -161,7 +192,8 @@ void init()
     stbi_image_free(data);
 
 
-    data = stbi_load(RES_DIR PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load(RES_DIR
+    PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
@@ -202,12 +234,13 @@ void init()
                                   0.1f, 100.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "projection"), 1, GL_FALSE,
                        glm::value_ptr(projection));
+    glEnable(GL_DEPTH_TEST);
 }
 
 void draw()
 {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);
@@ -215,12 +248,15 @@ void draw()
     glBindTexture(GL_TEXTURE_2D, texture2);
     glUseProgram(shader->ID);
     glBindVertexArray(VAO);
-#ifdef RECT
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-#else
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-#endif
-    glBindVertexArray(0);
+    for (int i = 0; i < 10; ++i) {
+        auto model = glm::identity<glm::mat4>();;
+        model = glm::translate(model, cubePositions[i]);
+        float a = 20.0f * (float)i;
+        model = glm::rotate(model, glm::radians(a), glm::vec3(1.0f, 0.3f, 0.5f));
+        glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE,
+                           glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 }
 
 float step = 0.02f;
