@@ -476,3 +476,71 @@ void main()
 
 ## GLM
 
+可以通过平移量和旋转量来构建平移旋转变换矩阵
+
+```c++
+glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+// 平移变换
+glm::mat4 trans;
+trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+
+// 旋转
+trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+
+// 缩放
+trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+vec = trans * vec;
+```
+
+# 坐标系统
+
+- 局部空间(Local Space，或者称为物体空间(Object Space))
+- 世界空间(World Space)
+- 观察空间(View Space，或者称为视觉空间(Eye Space))
+- 裁剪空间(Clip Space)
+- 屏幕空间(Screen Space)
+
+![coordination_system](https://learnopengl-cn.github.io/img/01/08/coordinate_systems.png)
+
+1. 局部坐标是对象相对于局部原点的坐标，也是物体起始的坐标。
+2. 下一步是将局部坐标变换为世界空间坐标，世界空间坐标是处于一个更大的空间范围的。这些坐标相对于世界的全局原点，它们会和其它物体一起相对于世界的原点进行摆放。
+3. 接下来我们将世界坐标变换为观察空间坐标，使得每个坐标都是从摄像机或者说观察者的角度进行观察的。
+4. 坐标到达观察空间之后，我们需要将其投影到裁剪坐标。裁剪坐标会被处理至-1.0到1.0的范围内，并判断哪些顶点将会出现在屏幕上。
+5. 最后，我们将裁剪坐标变换为屏幕坐标，我们将使用一个叫做视口变换(Viewport Transform)的过程。视口变换将位于-1.0到1.0范围的坐标变换到由glViewport函数所定义的坐标范围内。最后变换出来的坐标将会送到光栅器，将其转化为片段。
+
+## 局部空间
+
+对于模型来说的基准坐标系
+
+## 世界空间
+
+所有模型统一的坐标空间
+
+## 观察空间
+
+摄像机坐标空间
+
+## 裁剪空间
+
+投影后裁剪掉视角之外的点
+
+### 正射投影
+
+平行线仍然是平行线
+
+```c++
+glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+```
+
+### 透视投影
+
+远小近大
+
+```c++
+glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);
+```
+
+![透视原理](https://learnopengl-cn.github.io/img/01/08/perspective_frustum.png)
+
+第一个参数决定了角度，第二个参数设置高宽比，第三个近距离平面，第四个参数远距离平面
