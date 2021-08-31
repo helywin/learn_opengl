@@ -10,6 +10,12 @@
 
 #include <stb_image.h>
 
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void init();
@@ -183,7 +189,8 @@ void main()
     // 加载时上下翻转图片
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrChannels;
-    unsigned char *data = stbi_load(RES_DIR "\\container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load(RES_DIR PATH_SEP "container.jpg", &width, &height, &nrChannels,
+                                    0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
@@ -201,7 +208,7 @@ void main()
     stbi_image_free(data);
 
 
-    data = stbi_load(RES_DIR "\\awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load(RES_DIR PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
