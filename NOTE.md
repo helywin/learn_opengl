@@ -646,3 +646,11 @@ glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
 glm::vec3 result = lightColor * objectColor; // = (1.0f, 0.5f, 0.31f);
 ```
 
+# 基础光照
+
+冯氏光照模型(Phong Lighting Model)：
+
+- 环境(Ambient)：整体的光亮
+- 漫反射(Diffuse)：正对着量，背对着暗，一个平面的亮度是一样的，模拟平行光源
+- 镜面(Specular)：高光，模拟点光源
+
