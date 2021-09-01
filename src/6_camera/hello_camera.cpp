@@ -17,6 +17,7 @@
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void init();
 
 void draw();
@@ -24,6 +25,14 @@ void add();
 void sub();
 void clockWise();
 void counterClockWise();
+void forward();
+void backward();
+void left();
+void right();
+void rotateLeft();
+void rotateRight();
+void rotateUp();
+void rotateDown();
 
 // settings
 unsigned int SCR_WIDTH = 800;
@@ -31,7 +40,7 @@ unsigned int SCR_HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint EBO;
-std::shared_ptr <Shader> shader;
+std::shared_ptr<Shader> shader;
 GLuint texture1;
 GLuint texture2;
 float transparent = 0.2f;
@@ -53,6 +62,10 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    // 注册鼠标消息
+    glfwSetCursorPosCallback(window, mouse_callback);
+    // 隐藏鼠标显示
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // 先初始化glad才能调用OpenGL函数
     init();
     while (!glfwWindowShouldClose(window)) {
@@ -81,6 +94,22 @@ void processInput(GLFWwindow *window)
         clockWise();
     } else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
         counterClockWise();
+    } else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        forward();
+    } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        backward();
+    } else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        left();
+    } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        right();
+    } else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        rotateLeft();
+    } else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        rotateRight();
+    } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        rotateUp();
+    } else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+        rotateDown();
     }
 }
 
@@ -142,15 +171,20 @@ glm::vec3 cubePositions[] = {
         glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
+// 相机位置
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+// 目标位置
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 0.0f);
+// 上向量
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
 float angle = 0;
 
 void init()
 {
     shader = std::make_shared<Shader>(
-            ROOT_PATH
-    PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination_cube.vert",
-            ROOT_PATH
-    PATH_SEP "src" PATH_SEP "5_coordination" PATH_SEP "coordination_cube.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "6_camera" PATH_SEP "camera.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "6_camera" PATH_SEP "camera.frag"
     );
 
     glGenBuffers(1, &VBO);
@@ -172,8 +206,8 @@ void init()
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrChannels;
     unsigned char *data = stbi_load(RES_DIR
-    PATH_SEP "container.jpg", &width, &height, &nrChannels,
-            0);
+                                    PATH_SEP "container.jpg", &width, &height, &nrChannels,
+                                    0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
@@ -192,7 +226,7 @@ void init()
 
 
     data = stbi_load(RES_DIR
-    PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
+                     PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
     if (!data) {
         std::cout << "load image failed!" << std::endl;
         exit(-1);
@@ -219,12 +253,13 @@ void init()
                        glm::value_ptr(trans));
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE,
                        glm::value_ptr(model));
 
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+
+//    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
                        glm::value_ptr(view));
 
@@ -247,15 +282,7 @@ void draw()
     glBindTexture(GL_TEXTURE_2D, texture2);
     glUseProgram(shader->ID);
     glBindVertexArray(VAO);
-    for (int i = 0; i < 10; ++i) {
-        auto model = glm::mat4(1.0f);;
-        model = glm::translate(model, cubePositions[i]);
-        float a = 20.0f * (float)i;
-        model = glm::rotate(model, glm::radians(a), glm::vec3(1.0f, 0.3f, 0.5f));
-        glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE,
-                           glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 float step = 0.02f;
@@ -294,4 +321,113 @@ void counterClockWise()
     trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "transform"), 1, GL_FALSE,
                        glm::value_ptr(trans));
+}
+
+float speed = 0.05;
+
+
+void forward()
+{
+    auto direction = glm::normalize(cameraFront - cameraPos);
+    cameraPos = cameraPos + speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void backward()
+{
+    auto direction = glm::normalize(cameraFront - cameraPos);
+    cameraPos = cameraPos - speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void left()
+{
+    auto direction = glm::normalize(-glm::cross(cameraUp, cameraFront - cameraPos));
+    cameraPos = cameraPos + speed * direction;
+    cameraFront = cameraFront + speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void right()
+{
+    auto direction = glm::normalize(-glm::cross(cameraUp, cameraFront - cameraPos));
+    cameraPos = cameraPos - speed * direction;
+    cameraFront = cameraFront - speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void rotateLeft()
+{
+    auto direction = glm::normalize(-glm::cross(cameraUp, cameraFront - cameraPos));
+//    cameraPos = cameraPos - speed * direction;
+    cameraFront = cameraFront - speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void rotateRight()
+{
+    auto direction = glm::normalize(-glm::cross(cameraUp, cameraFront - cameraPos));
+    //    cameraPos = cameraPos - speed * direction;
+    cameraFront = cameraFront + speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void rotateUp()
+{
+    auto direction = glm::normalize(cameraUp);
+    //    cameraPos = cameraPos - speed * direction;
+    cameraFront = cameraFront + speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+void rotateDown()
+{
+    auto direction = glm::normalize(cameraUp);
+    //    cameraPos = cameraPos - speed * direction;
+    cameraFront = cameraFront - speed * direction;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+}
+
+bool posInit = false;
+double lastXPos;
+double lastYPos;
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    if (!posInit) {
+        lastXPos = xpos;
+        lastYPos = ypos;
+        posInit = true;
+        return;
+    }
+//    std::cout << xpos - lastXPos << ", " << ypos - lastYPos << std::endl;
+    glm::vec3 direction = glm::vec3(xpos - lastXPos, -ypos + lastYPos, 0.0f);
+    auto distance = glm::length(cameraFront - cameraPos);
+    std::cout << "distance : " << distance << std::endl;
+    cameraFront = cameraFront + 0.1f * distance * speed * direction;
+    auto distance1 = cameraFront - cameraPos;
+    distance1 = distance * glm::normalize(distance1);
+    cameraFront = cameraPos + distance1;
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE,
+                       glm::value_ptr(view));
+
+    lastXPos = xpos;
+    lastYPos = ypos;
 }
