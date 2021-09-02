@@ -708,3 +708,28 @@ FragColor = vec4((ambientStrength + diff + specular) * lightColor * objectColor,
 
 > 在顶点着色器中实现的冯氏光照模型叫做Gouraud着色(Gouraud Shading)，而不是冯氏着色(Phong Shading)。记住，由于插值，这种光照看起来有点逊色。冯氏着色能产生更平滑的光照效果。
 
+# 材质
+
+```glsl
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+}; 
+    
+struct Light {
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+```
+
+材质的反射系数包含三种颜色，用vector
+
+# 光照贴图
+
+漫反射贴图和镜面贴图
+
+环境光和漫反射
