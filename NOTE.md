@@ -654,3 +654,57 @@ glm::vec3 result = lightColor * objectColor; // = (1.0f, 0.5f, 0.31f);
 - 漫反射(Diffuse)：正对着量，背对着暗，一个平面的亮度是一样的，模拟平行光源
 - 镜面(Specular)：高光，模拟点光源
 
+## 环境光照
+
+```glsl
+void main()
+{
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+    vec3 result = ambient * objectColor;
+    FragColor = vec4(result, 1.0);
+}
+```
+
+## 漫反射光照
+
+平行光照射到表面，入射角不一样单位面积的光照强度不一样，需要表面法向量进行计算
+
+## 法线变换
+
+当物体随着空间坐标平移时，法向量不变，但是物体旋转法向量会变化，物体不等比缩放也会
+
+![不等比缩放](https://learnopengl-cn.github.io/img/02/02/basic_lighting_normal_transformation.png)
+
+法线矩阵：[文章](http://www.lighthouse3d.com/tutorials/glsl-tutorial/the-normal-matrix/)
+
+```glsl
+Normal = mat3(transpose(inverse(model))) * aNormal;
+```
+
+> 即使是对于着色器来说，逆矩阵也是一个开销比较大的运算，因此，只要可能就应该避免在着色器中进行逆矩阵运算，它们必须为你场景中的每个顶点都进行这样的处理。用作学习目这样做是可以的，但是对于一个对效率有要求的应用来说，在绘制之前你最好用CPU计算出法线矩阵，然后通过uniform把值传递给着色器（像模型矩阵一样）。
+
+## 镜面光照
+
+![原理图](https://learnopengl-cn.github.io/img/02/02/basic_lighting_specular_theory.png)
+
+夹角越小亮度越高
+
+先计算点到相机的向量，然后根据光源到点的向量利用`reflect`函数根据面法向量计算反射光向量，然后取内积
+
+```glsl
+vec3 norm = normalize(Normal);
+vec3 lightDir = normalize(lightPos - FragPos);
+float diff = max(dot(norm, lightDir), 0.0);
+
+vec3 viewDir = normalize(viewPos - FragPos);
+// caculate reflection vector by reflect
+vec3 reflectDir = reflect(-lightDir, norm);
+float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+float specular = specularStrength * spec;
+FragColor = vec4((ambientStrength + diff + specular) * lightColor * objectColor, transparent);
+```
+
+> 在顶点着色器中实现的冯氏光照模型叫做Gouraud着色(Gouraud Shading)，而不是冯氏着色(Phong Shading)。记住，由于插值，这种光照看起来有点逊色。冯氏着色能产生更平滑的光照效果。
+

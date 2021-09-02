@@ -56,47 +56,47 @@ float transparent = 0.2f;
 
 // 位置, 纹理
 float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
 
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f
 };
 
 glm::vec3 cubePositions[] = {
@@ -125,6 +125,9 @@ float angle = 0;
 ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 ImVec4 objectColor(1.0f, 0.5f, 0.31f, 1.0f);
 ImVec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
+float ambientStrength = 0.1f;
+float specularStrength = 0.5f;
+int shininess = 5;
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -191,35 +194,25 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on M
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-// Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-
     init();
 
 // Main loop
     while (!glfwWindowShouldClose(window)) {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         processInput(window);
         glfwPollEvents();
 
-        // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             ImGui::Begin("Settings");
             ImGui::ColorEdit3("clear color", (float *) &clearColor);
             ImGui::ColorEdit3("light color", (float *) &lightColor);
             ImGui::ColorEdit3("object color", (float *) &objectColor);
+            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
+            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
+            ImGui::SliderInt((std::string("shininess: 2^") + std::to_string(shininess)).c_str(),
+                             &shininess, 1, 8);
             ImGui::End();
         }
 
@@ -250,8 +243,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void init()
 {
     shader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_gui.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_gui.frag"
     );
 
     lightShader = std::make_shared<Shader>(
@@ -267,17 +260,18 @@ void init()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
-    //    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-    //                          (void *) (3 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          (void *) (3 * sizeof(float)));
 
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     glGenVertexArrays(1, &lightVAO);
     glBindVertexArray(lightVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
     //    glEnableVertexAttribArray(1);
 
@@ -365,18 +359,23 @@ void draw()
 
     glBindVertexArray(VAO);
     shader->use();
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    shader->setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
+    shader->setFloat("ambientStrength", ambientStrength);
+    shader->setFloat("specularStrength", specularStrength);
+    shader->setFloat("shininess", (float)pow(2, shininess));
     shader->setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
     shader->setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 model = glm::mat4(1.0f);
     shader->setMatrix4fv("model", glm::value_ptr(model));
     shader->setMatrix4fv("view", glm::value_ptr(view));
+    shader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(lightVAO);
     lightShader->use();
     lightShader->setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
     lightShader->setMatrix4fv("model", glm::value_ptr(model));
@@ -408,8 +407,8 @@ void clockWise()
     std::cout << "angle: " << angle << std::endl;
     glm::mat4 trans = glm::mat4(1.0f);
     trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "transform"), 1, GL_FALSE,
-                       glm::value_ptr(trans));
+    shader->use();
+    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 void counterClockWise()
@@ -418,8 +417,8 @@ void counterClockWise()
     std::cout << "angle: " << angle << std::endl;
     glm::mat4 trans = glm::mat4(1.0f);
     trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    glUniformMatrix4fv(glGetUniformLocation(shader->ID, "transform"), 1, GL_FALSE,
-                       glm::value_ptr(trans));
+    shader->use();
+    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 //float cameraSpeed = 0.05f;
@@ -472,6 +471,12 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        cameraPos += glm::normalize(cameraUp) * cameraSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+        cameraPos -= glm::normalize(cameraUp) * cameraSpeed;
+    }
 }
 
 bool posInit = false;
@@ -483,6 +488,7 @@ float pitch = 0;
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
     if (showCursor) {
+        posInit = false;
         return;
     }
     if (!posInit) {
