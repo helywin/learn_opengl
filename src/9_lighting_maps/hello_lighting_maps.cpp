@@ -53,6 +53,7 @@ std::shared_ptr<Shader> shader;
 std::shared_ptr<Shader> lightShader;
 GLuint texture1;
 GLuint texture2;
+GLuint texture3;
 float transparent = 0.2f;
 
 // 位置, 纹理
@@ -282,6 +283,7 @@ void init()
 
     texture1 = loadTexture(RES_DIR PATH_SEP "container2.png");
     texture2 = loadTexture(RES_DIR PATH_SEP "container2_specular.png");
+    texture3 = loadTexture(RES_DIR PATH_SEP "matrix.jpg");
 
 
     // 设置不同的texture对应的采样器id
@@ -289,6 +291,7 @@ void init()
     shader->setFloat("transparent", transparent);
     shader->setInt("material.diffuse", 0);
     shader->setInt("material.specular", 1);
+    shader->setInt("matrix", 2);
 
     glm::mat4 trans = glm::mat4(1.0f);
 
@@ -325,6 +328,8 @@ void draw()
     glBindTexture(GL_TEXTURE_2D, texture1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, texture3);
 
     glBindVertexArray(VAO);
     shader->use();

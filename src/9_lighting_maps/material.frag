@@ -26,6 +26,7 @@ struct Light {
 
 uniform Material material;
 uniform Light light;
+uniform sampler2D matrix;
 
 uniform vec3 viewPos;
 
@@ -46,5 +47,8 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = light.specular * texture(material.specular, TexCoord).rgb * spec;
 
-    FragColor = vec4(ambient + diffuse + specular, transparent);
+    vec3 matrixColor = texture(matrix, TexCoord).rgb;
+    float green = length(matrixColor);
+
+    FragColor = vec4((1 - green) * (ambient + diffuse + specular) + green * matrixColor, transparent);
 }
