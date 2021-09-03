@@ -7,17 +7,7 @@
 
 #include <string>
 
-class Texture2D
-{
-    enum Type
-    {
-        rgb,
-        rgba
-    };
-public:
-    unsigned int ID;
-    Texture2D(const std::string &file, Type type);
-};
+unsigned int loadTexture(char const * path);
 
 
 #endif //LEARN_OPENGL_TEXTURE2D_HPP

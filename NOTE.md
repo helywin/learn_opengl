@@ -735,3 +735,132 @@ struct Light {
 环境光和漫反射
 
 放射光贴图
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+in vec2 TexCoord;
+in vec3 Normal;
+
+// real position in world axis
+in vec3 FragPos;
+
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform float transparent;
+
+struct Material {
+    sampler2D diffuse;
+    sampler2D specular;
+    float shininess;
+};
+
+
+struct Light {
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+uniform Material material;
+uniform Light light;
+uniform sampler2D matrix;
+
+uniform vec3 viewPos;
+
+void main()
+{
+    // 环境光
+    vec3 ambient = light.ambient * texture(material.diffuse, TexCoord).rgb;
+
+    // 漫反射
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(light.position - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoord).rgb;
+
+    // 镜面反射
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    vec3 specular = light.specular * texture(material.specular, TexCoord).rgb * spec;
+
+    vec3 matrixColor = texture(matrix, TexCoord).rgb;
+    float green = length(matrixColor);
+
+    FragColor = vec4((1 - green) * (ambient + diffuse + specular) + green * matrixColor, transparent);
+}
+```
+
+# 投光物
+
+## 平行光
+
+定向光源
+
+```glsl
+struct Light {
+    vec3 direction;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+```
+
+可以使用vec4来代表光源方向
+
+```glsl
+if(lightVector.w == 0.0) // 注意浮点数据类型的误差
+  // 执行定向光照计算
+else if(lightVector.w == 1.0)
+  // 根据光源的位置做光照计算（与上一节一样）
+```
+
+## 点光源
+
+光照强度随着距离衰减
+$$
+\begin{equation} F_{att} = \frac{1.0}{K_c + K_l * d + K_q * d^2} \end{equation}
+$$
+
+- $K_c$通常大于等于1.0，保证值小于等于1
+- 一次项线性衰减
+- 二次项平方衰减
+
+![衰减](https://learnopengl-cn.github.io/img/02/05/attenuation.png)
+
+经验值[来源](http://www.ogre3d.org/tikiwiki/tiki-index.php?page=-Point+Light+Attenuation)：
+
+| 距离 | 常数项 | 一次项 | 二次项   |
+| ---- | ------ | ------ | -------- |
+| 7    | 1.0    | 0.7    | 1.8      |
+| 13   | 1.0    | 0.35   | 0.44     |
+| 20   | 1.0    | 0.22   | 0.20     |
+| 32   | 1.0    | 0.14   | 0.07     |
+| 50   | 1.0    | 0.09   | 0.032    |
+| 65   | 1.0    | 0.07   | 0.017    |
+| 100  | 1.0    | 0.045  | 0.0075   |
+| 160  | 1.0    | 0.027  | 0.0028   |
+| 200  | 1.0    | 0.022  | 0.0019   |
+| 325  | 1.0    | 0.014  | 0.0007   |
+| 600  | 1.0    | 0.007  | 0.0002   |
+| 3250 | 1.0    | 0.0014 | 0.000007 |
+
+## 衰减实现
+
+```glsl
+struct Light {
+    vec3 position;  
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+```
+
