@@ -6,8 +6,6 @@ in vec3 Normal;
 // real position in world axis
 in vec3 FragPos;
 
-uniform sampler2D texture1;
-uniform sampler2D texture2;
 uniform float transparent;
 
 struct Material {

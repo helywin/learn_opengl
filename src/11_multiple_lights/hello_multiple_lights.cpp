@@ -102,7 +102,7 @@ float vertices[] = {
         -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
 };
 
-glm::vec3 cubePositions[] = {
+glm::vec3 cubePositions[10] = {
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(2.0f, 5.0f, -15.0f),
         glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -115,6 +115,12 @@ glm::vec3 cubePositions[] = {
         glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
+glm::vec3 pointLightPositions[] = {
+        glm::vec3(0.7f, 0.2f, 2.0f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f, 2.0f, -12.0f),
+        glm::vec3(0.0f, 0.0f, -3.0f)
+};
 
 // 位置向量
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -246,13 +252,13 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void init()
 {
     shader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "9_lighting_maps" PATH_SEP "material.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "9_lighting_maps" PATH_SEP "material.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "11_multiple_lights" PATH_SEP "material.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "11_multiple_lights" PATH_SEP "material.frag"
     );
 
     lightShader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "9_lighting_maps" PATH_SEP "light_source.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "9_lighting_maps" PATH_SEP "light_source.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "11_multiple_lights" PATH_SEP "light_source.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "11_multiple_lights" PATH_SEP "light_source.frag"
     );
 
     glGenBuffers(1, &VBO);
@@ -283,7 +289,6 @@ void init()
 
     texture1 = loadTexture(RES_DIR PATH_SEP "container2.png");
     texture2 = loadTexture(RES_DIR PATH_SEP "container2_specular.png");
-    texture3 = loadTexture(RES_DIR PATH_SEP "matrix.jpg");
 
 
     // 设置不同的texture对应的采样器id
@@ -291,7 +296,6 @@ void init()
     shader->setFloat("transparent", transparent);
     shader->setInt("material.diffuse", 0);
     shader->setInt("material.specular", 1);
-    shader->setInt("matrix", 2);
 
     glm::mat4 trans = glm::mat4(1.0f);
 
@@ -328,34 +332,89 @@ void draw()
     glBindTexture(GL_TEXTURE_2D, texture1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, texture3);
 
     glBindVertexArray(VAO);
     shader->use();
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     // 将光照调暗了一些以搭配场景
-    shader->setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
-    shader->setVec3("light.ambient", lightColor.x * 0.2, lightColor.y * 0.2, lightColor.z * 0.2);
-    shader->setVec3("light.diffuse", lightColor.x * 0.5, lightColor.y * 0.5, lightColor.z * 0.5);
-    shader->setVec3("light.specular", lightColor.x, lightColor.y, lightColor.z);
+
     shader->setVec3("material.ambient", objectColor.x, objectColor.y, objectColor.z);
     shader->setFloat("material.shininess", pow(2, shininess));
+    
+    shader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+    shader->setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+    // point light 1
+    shader->setVec3("pointLights[0].position", pointLightPositions[0]);
+    shader->setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+    shader->setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("pointLights[0].constant", 1.0f);
+    shader->setFloat("pointLights[0].linear", 0.09);
+    shader->setFloat("pointLights[0].quadratic", 0.032);
+    // point light 2
+    shader->setVec3("pointLights[1].position", pointLightPositions[1]);
+    shader->setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+    shader->setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("pointLights[1].constant", 1.0f);
+    shader->setFloat("pointLights[1].linear", 0.09);
+    shader->setFloat("pointLights[1].quadratic", 0.032);
+    // point light 3
+    shader->setVec3("pointLights[2].position", pointLightPositions[2]);
+    shader->setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+    shader->setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("pointLights[2].constant", 1.0f);
+    shader->setFloat("pointLights[2].linear", 0.09);
+    shader->setFloat("pointLights[2].quadratic", 0.032);
+    // point light 4
+    shader->setVec3("pointLights[3].position", pointLightPositions[3]);
+    shader->setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+    shader->setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("pointLights[3].constant", 1.0f);
+    shader->setFloat("pointLights[3].linear", 0.09);
+    shader->setFloat("pointLights[3].quadratic", 0.032);
+    // spotLight
+    shader->setVec3("spotLight.position", cameraPos);
+    shader->setVec3("spotLight.direction", cameraFront);
+    shader->setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+    shader->setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+    shader->setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("spotLight.constant", 1.0f);
+    shader->setFloat("spotLight.linear", 0.09);
+    shader->setFloat("spotLight.quadratic", 0.032);
+    shader->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+    shader->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));     
+
+    
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 model = glm::mat4(1.0f);
-    shader->setMatrix4fv("model", glm::value_ptr(model));
     shader->setMatrix4fv("view", glm::value_ptr(view));
     shader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    for (int i = 0; i < 10; ++i) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions[i]);
+        float a = angle + 20.0f * (float) i;
+        model = glm::rotate(model, glm::radians(a), glm::vec3(1.0f, 0.3f, 0.5f));
+        shader->setMatrix4fv("model", glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
 
     glBindVertexArray(lightVAO);
     lightShader->use();
     lightShader->setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f));
-    lightShader->setMatrix4fv("model", glm::value_ptr(model));
-    lightShader->setMatrix4fv("view", glm::value_ptr(view));
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    for (int i = 0; i < 4; ++i) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, pointLightPositions[i]);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightShader->setMatrix4fv("model", glm::value_ptr(model));
+        lightShader->setMatrix4fv("view", glm::value_ptr(view));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 }
 
 float step = 0.02f;
@@ -379,21 +438,11 @@ void sub()
 void clockWise()
 {
     angle += 10;
-    std::cout << "angle: " << angle << std::endl;
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    shader->use();
-    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 void counterClockWise()
 {
     angle -= 10;
-    std::cout << "angle: " << angle << std::endl;
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    shader->use();
-    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 //float cameraSpeed = 0.05f;

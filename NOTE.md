@@ -864,3 +864,70 @@ struct Light {
 };
 ```
 
+## 聚光
+
+Spotlight，
+
+![聚光](https://learnopengl-cn.github.io/img/02/05/light_casters_spotlight_angles.png)
+
+```glsl
+struct Light {
+    vec3  position;
+    vec3  direction;
+    float cutOff;
+    
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+```
+
+比较$\theta$的余弦和cutOff的大小，大于则在里面
+
+## 平滑/软化边缘
+
+内外圆锥，如果在外圆锥外，强度为0，如果在两者之间，为0-1，如果在内则为1
+$$
+\begin{equation} I = \frac{\theta - \gamma}{\epsilon} \end{equation}
+
+$$
+这里$\epsilon$是内（$\phi$）和外圆锥（$\gamma$）之间的余弦值差（$\epsilon=\phi−\gamma$）。最终的*I*值就是在当前片段聚光的强度。
+
+```glsl
+struct Light {
+    vec3  position;
+    vec3  direction;
+    float cutOff;
+    float outerCutOff;
+    
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+```
+
+# 多光源
+
+封装多个光源依次渲染
+
+```glsl
+out vec4 FragColor;
+
+void main()
+{
+  // 定义一个输出颜色值
+  vec3 output;
+  // 将定向光的贡献加到输出中
+  output += someFunctionToCalculateDirectionalLight();
+  // 对所有的点光源也做相同的事情
+  for(int i = 0; i < nr_of_point_lights; i++)
+    output += someFunctionToCalculatePointLight();
+  // 也加上其它的光源（比如聚光）
+  output += someFunctionToCalculateSpotLight();
+
+  FragColor = vec4(output, 1.0);
+}
+```
+
+# 模型加载
+
