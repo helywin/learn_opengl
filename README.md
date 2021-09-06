@@ -47,3 +47,7 @@ sudo apt install libglfw3-dev
 ## 编译
 
 cmake -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+# 资源
+
+gun model: [Free3D](https://free3d.com/3d-model/45-acp-smith-and-wesson-13999.html)

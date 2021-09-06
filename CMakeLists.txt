@@ -74,5 +74,6 @@ add_compile_definitions(PATH_SEP="/" ROOT_PATH="${CMAKE_SOURCE_DIR}" RES_DIR="${
 
 
 find_package(glfw3 CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 add_subdirectory(src)
