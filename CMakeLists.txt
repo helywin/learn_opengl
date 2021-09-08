@@ -65,15 +65,21 @@ if (WIN32)
     find_package(glad CONFIG REQUIRED)
     set(GLAD glad::glad)
     set(OPENGL opengl32)
-else()
+else ()
     set(GLAD glad)
     set(OPENGL OpenGL)
-endif()
+endif ()
 
 add_compile_definitions(PATH_SEP="/" ROOT_PATH="${CMAKE_SOURCE_DIR}" RES_DIR="${CMAKE_SOURCE_DIR}/res")
 
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+
+if (UNIX)
+    set(ASSIMP assimp)
+else ()
+    set(ASSIMP assimp::assimp)
+endif ()
 
 add_subdirectory(src)

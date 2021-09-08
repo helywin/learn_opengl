@@ -1,6 +1,7 @@
 add_subdirectory(com)
 add_subdirectory(imgui)
 add_subdirectory(test_imgui)
+add_subdirectory(demo)
 add_subdirectory(test_assimp)
 add_subdirectory(1_triangle)
 add_subdirectory(2_shader)

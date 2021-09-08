@@ -7,10 +7,10 @@
 #include "Shader.hpp"
 
 Mesh::Mesh(std::vector<Vertex> &&vertices, std::vector<unsigned int> &&indices,
-           std::vector<Texture> &&textures) :
+           Material &&material) :
         vertices(std::forward<decltype(vertices)>(vertices)),
         indices(std::forward<decltype(indices)>(indices)),
-        textures(std::forward<decltype(textures)>(textures))
+        material(std::forward<Material>(material))
 {
     setupMesh();
 }
@@ -19,16 +19,20 @@ void Mesh::draw(const Shader &shader) const
 {
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
-    for (unsigned int i = 0; i < textures.size(); ++i) {
+    shader.setVec3("material.ambient", material.ambient);
+    shader.setVec3("material.diffuse", material.diffuse);
+    shader.setVec3("material.specular", material.specular);
+    shader.setFloat("material.shininess", material.shininess);
+    for (unsigned int i = 0; i < material.textures.size(); ++i) {
         glActiveTexture(GL_TEXTURE0 + i);
 
-        std::string name = std::string("material.") + textures[i].type;
-        if (textures[i].type == "texture_diffuse")
+        std::string name = std::string("material.") + material.textures[i].type;
+        if (material.textures[i].type == "texture_diffuse")
             name += std::to_string(diffuseNr++);
-        else if (textures[i].type == "texture_specular")
+        else if (material.textures[i].type == "texture_specular")
             name += std::to_string(specularNr++);
         shader.setInt(name, i); // todo ?
-        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        glBindTexture(GL_TEXTURE_2D, material.textures[i].id);
     }
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

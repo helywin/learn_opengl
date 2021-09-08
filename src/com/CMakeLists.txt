@@ -7,7 +7,7 @@ target_link_libraries(com
         ${OPENGL}
         glfw
         ${GLAD}
-        assimp::assimp
+        ${ASSIMP}
         )
 
 target_include_directories(com PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

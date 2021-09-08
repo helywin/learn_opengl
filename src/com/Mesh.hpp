@@ -26,18 +26,27 @@ struct Texture
     std::string path;
 };
 
+struct Material
+{
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+    float shininess;
+    std::vector<Texture> textures;
+};
+
 class Mesh
 {
 public:
     Mesh(std::vector<Vertex> &&vertices, std::vector<unsigned int> &&indices,
-         std::vector<Texture> &&textures);
+         Material &&material);
 
     void draw(const Shader &shader) const;
 
 public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    Material material;
 
 private:
     unsigned int VAO{}, VBO{}, EBO{};

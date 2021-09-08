@@ -41,6 +41,9 @@ void ModelPrivate::loadModel(const std::string &path)
     }
     directory = path.substr(0, path.find_last_of('/'));
     processNode(scene->mRootNode, scene);
+    std::cout << scene->mNumMeshes << " meshes, "
+              << scene->mNumLights << " lights, "
+              << std::endl;
 }
 
 void ModelPrivate::processNode(aiNode *node, const aiScene *scene)
@@ -60,6 +63,8 @@ Mesh ModelPrivate::processMesh(aiMesh *mesh, const aiScene *scene)
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
     // 读取顶点数据
+    std::cout << "vertices (" << mesh->mName.C_Str() << "): " << mesh->mNumVertices << std::endl;
+    std::cout << "faces (" << mesh->mName.C_Str() << "): " << mesh->mNumFaces << std::endl;
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
         Vertex vertex;
         vertex.position.x = mesh->mVertices[i].x;
@@ -87,18 +92,30 @@ Mesh ModelPrivate::processMesh(aiMesh *mesh, const aiScene *scene)
         }
     }
 
+    Material material;
     if (mesh->mMaterialIndex >= 0) {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE,
+        aiMaterial *mat = scene->mMaterials[mesh->mMaterialIndex];
+        aiColor3D color;
+        if (mat->Get(AI_MATKEY_COLOR_AMBIENT, color) == aiReturn_SUCCESS) {
+            material.ambient.x = color.r;
+            material.ambient.y = color.g;
+            material.ambient.z = color.b;
+        }
+        if (mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == aiReturn_SUCCESS) {
+            material.diffuse.x = color.r;
+            material.diffuse.y = color.g;
+            material.diffuse.z = color.b;
+        }
+        std::vector<Texture> diffuseMaps = loadMaterialTextures(mat, aiTextureType_DIFFUSE,
                                                                 "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR,
+        std::vector<Texture> specularMaps = loadMaterialTextures(mat, aiTextureType_SPECULAR,
                                                                  "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
     return Mesh{std::move(vertices),
                 std::move(indices),
-                std::move(textures)};
+                std::move(material)};
 }
 
 std::vector<Texture> ModelPrivate::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
@@ -115,9 +132,15 @@ std::vector<Texture> ModelPrivate::loadMaterialTextures(aiMaterial *mat, aiTextu
                                 });
         if (!skip) {
             Texture texture;
-            texture.id = textureFromFile(directory + "/" + str.C_Str());
+            std::string file(str.C_Str());
+            std::for_each(file.begin(), file.end(), [](char &c) {
+                if (c == '\\') {
+                    c = '/';
+                }
+            });
+            texture.id = textureFromFile(directory + "/" + file);
             texture.type = typeName;
-            texture.path = str.C_Str();
+            texture.path = file;
             textures.push_back(texture);
             texturesLoaded.push_back(texture);
         }
