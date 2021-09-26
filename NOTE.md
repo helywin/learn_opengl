@@ -461,12 +461,12 @@ glBindTexture(GL_TEXTURE_2D, texture2);
 #version 330 core
 ...
 
-uniform sampler2D texture2;
+uniform sampler2D texture1;
 uniform sampler2D texture2;
 
 void main()
 {
-    FragColor = mix(texture1(texture2, TexCoord), texture1(texture2, TexCoord), 0.2);
+    FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2);
 }
 ```
 
@@ -641,9 +641,9 @@ front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 光学模型：
 
 ```c++
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
-glm::vec3 result = lightColor * objectColor; // = (1.0f, 0.5f, 0.31f);
+glm::vec3 cubeColor(1.0f, 1.0f, 1.0f);
+glm::vec3 terrainColor(1.0f, 0.5f, 0.31f);
+glm::vec3 result = cubeColor * terrainColor; // = (1.0f, 0.5f, 0.31f);
 ```
 
 # 基础光照
@@ -660,9 +660,9 @@ glm::vec3 result = lightColor * objectColor; // = (1.0f, 0.5f, 0.31f);
 void main()
 {
     float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * lightColor;
+    vec3 ambient = ambientStrength * cubeColor;
 
-    vec3 result = ambient * objectColor;
+    vec3 result = ambient * terrainColor;
     FragColor = vec4(result, 1.0);
 }
 ```
@@ -703,7 +703,7 @@ vec3 viewDir = normalize(viewPos - FragPos);
 vec3 reflectDir = reflect(-lightDir, norm);
 float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 float specular = specularStrength * spec;
-FragColor = vec4((ambientStrength + diff + specular) * lightColor * objectColor, transparent);
+FragColor = vec4((ambientStrength + diff + specular) * cubeColor * terrainColor, transparent);
 ```
 
 > 在顶点着色器中实现的冯氏光照模型叫做Gouraud着色(Gouraud Shading)，而不是冯氏着色(Phong Shading)。记住，由于插值，这种光照看起来有点逊色。冯氏着色能产生更平滑的光照效果。
@@ -889,7 +889,6 @@ struct Light {
 内外圆锥，如果在外圆锥外，强度为0，如果在两者之间，为0-1，如果在内则为1
 $$
 \begin{equation} I = \frac{\theta - \gamma}{\epsilon} \end{equation}
-
 $$
 这里$\epsilon$是内（$\phi$）和外圆锥（$\gamma$）之间的余弦值差（$\epsilon=\phi−\gamma$）。最终的*I*值就是在当前片段聚光的强度。
 
@@ -1029,3 +1028,162 @@ void Draw(Shader shader)
 
 # 模型
 
+使用之前的封装，用ASSIMP加载数据
+
+# 深度测试
+
+深度缓冲会存储每个片段的深度信息，当深度测试(Depth Testing)被启用的时候，OpenGL会将一个片段的深度值与深度缓冲的内容进行对比。OpenGL会执行一个深度测试，如果这个测试通过了的话，深度缓冲将会更新为新的深度值。如果深度测试失败了，片段将会被丢弃。
+
+深度缓冲是片段着色器运行后运行，和`glViewPort`定义的窗口密切相关，`gl_FragCoord`从片段着色器之家访问，包含z分类代表深度值
+
+```c++
+// 开启
+glEnable(GL_DEPTH_TEST);
+// 每次绘制清理
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// 设置函数
+glDepthMask(GL_LESS);
+```
+
+深度测试函数
+
+| 函数        | 描述                                         |
+| ----------- | -------------------------------------------- |
+| GL_ALWAYS   | 永远通过深度测试                             |
+| GL_NEVER    | 永远不通过深度测试                           |
+| GL_LESS     | 在片段深度值小于缓冲的深度值时通过测试       |
+| GL_EQUAL    | 在片段深度值等于缓冲区的深度值时通过测试     |
+| GL_LEQUAL   | 在片段深度值小于等于缓冲区的深度值时通过测试 |
+| GL_GREATER  | 在片段深度值大于缓冲区的深度值时通过测试     |
+| GL_NOTEQUAL | 在片段深度值不等于缓冲区的深度值时通过测试   |
+| GL_GEQUAL   | 在片段深度值大于等于缓冲区的深度值时通过测试 |
+
+GL_ALWAYS，最后绘制的会覆盖掉之前绘制的
+
+## 深度值的计算
+
+$$
+\begin{equation} F_{depth} = \frac{z - near}{far - near} \end{equation}
+$$
+
+远平面，近平面的约束条件
+
+但通常不会使用线性的方式，因为z从很近到一般近的时候人的分辨能力最高，需要z值更加精确，所以采用曲线方式
+$$
+\begin{equation} F_{depth} = \frac{1/z - 1/near}{1/far - 1/near} \end{equation}
+$$
+![deep](https://learnopengl-cn.github.io/img/04/01/depth_non_linear_graph.png)
+
+在z从近到远的时候变换率下降
+
+## 深度缓冲的可视化
+
+```glsl
+void main()
+{
+    // 使用gl_fragCoord获取片元坐标
+    FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+}
+```
+
+## 深度冲突
+
+两个面重叠，移动视角时会不断地闪烁，呈现奇怪的花纹
+
+解决办法
+
+- 不要靠太近
+- 近平面设置远一些
+- 增加深度缓冲精度
+
+# 模板测试
+
+模板测试的目的：利用已经本次绘制的物体，产生一个区域，在下次绘制中利用这个区域做一些效果。
+
+片元着色器后执行模板测试，模板测试后执行深度测试。模板缓冲是一个8bit的矩阵
+
+![模板缓冲](https://learnopengl-cn.github.io/img/04/02/stencil_buffer.png)
+
+使用过程
+
+- 启用模板缓冲写入
+- 渲染物体，更新模板缓冲
+- 禁用模板缓冲写入
+- 渲染其他物体
+
+```c++
+// 启用
+glEnable(GL_STENCIL_TEST);
+// 清除
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+// 设置掩码
+glStencilMask(0xFF);
+```
+
+## 模板函数
+
+`glStencilFunc(GLenum func, GLint ref, GLuint mask)`
+
+- func为函数
+- ref为参考值
+- mask为和参考值比较之前（AND）运算的掩码
+
+例如
+
+```c++
+// 只要片段模板值等于1，片段就会绘制
+glStencilFunc(GL_EQUAL, 1, 0xFF)
+```
+
+`glStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)`
+
+- sfail为模板测试失败时采取的行为
+- dpfail为模板测试通过但是深度测试失败采取的行为
+- dppass为全部通过时采取的行为
+
+| 行为         | 描述                                               |
+| ------------ | -------------------------------------------------- |
+| GL_KEEP      | 保持当前储存的模板值                               |
+| GL_ZERO      | 将模板值设置为0                                    |
+| GL_REPLACE   | 将模板值设置为glStencilFunc函数设置的`ref`值       |
+| GL_INCR      | 如果模板值小于最大值则将模板值加1                  |
+| GL_INCR_WRAP | 与GL_INCR一样，但如果模板值超过了最大值则归零      |
+| GL_DECR      | 如果模板值大于最小值则将模板值减1                  |
+| GL_DECR_WRAP | 与GL_DECR一样，但如果模板值小于0则将其设置为最大值 |
+| GL_INVERT    | 按位翻转当前的模板缓冲值                           |
+
+默认情况都为`GL_KEEP`
+
+## 物体轮廓
+
+步骤：
+
+1. 在绘制（需要添加轮廓的）物体之前，将模板函数设置为GL_ALWAYS，每当物体的片段被渲染时，将模板缓冲更新为1。
+2. 渲染物体。
+3. 禁用模板写入以及深度测试。
+4. 将每个物体缩放一点点。
+5. 使用一个不同的片段着色器，输出一个单独的（边框）颜色。
+6. 再次绘制物体，但只在它们片段的模板值不等于1时才绘制。
+7. 再次启用模板写入和深度测试。
+
+## 总结
+
+模板测试的目的：利用已经本次绘制的物体，产生一个区域，在下次绘制中利用这个区域做一些效果。
+
+模板测试的有两个要点：
+模板测试，用于剔除片段
+模板缓冲更新，用于更新出一个模板区域出来，为下次绘制做准备
+
+模板缓冲区(Stencil Buffer)：与颜色缓冲区和深度缓冲区类似，模板缓冲区可以为屏幕上的每个像素点保存一个无符号整数值(8位，最大是256)。
+模板掩码函数，这里指定了一个像素点在模板缓冲区中的模板值哪些位是可以被修改的
+glStencilMask(0xFF); // 每一位都可以被修改，即启用模板缓冲写入
+glStencilMask(0x00); // 每一位都不可以被修改，即禁用模板缓冲写入
+
+模板测试的函数，这里指定是什么情况下通过模板测试
+比较流程：掩码值 mask 和参考值 ref 值先做与操作，再把当前模板中的值 stencil 与掩码值 mask 做与操作，然后参考 func  中的方法是否可以通过。这个比较方式使用了第三个参数 mask，例如 GL_LESS 通过，当且仅当 满足: ( stencil &  mask ) ref < ( stencil & mask )。GL_GEQUAL通过，当且仅当( stencil &  mask ) >= ( ref & mask )。
+
+ 物体轮廓理解：
+ 1、开启并设置模板测试条件为：总是通过测试，即本次绘制的所有片段都会通过测试并更新模板值；
+ 2、绘制物体并更新模板值；
+ 3、禁用模板缓冲写入；
+ 4、修改模板测试条件：没有模板值得片段才通过测试，意味着这次绘制会丢弃掉之前绘制的物体区域（并不影响上次的绘制，只会影响接下来的绘制）

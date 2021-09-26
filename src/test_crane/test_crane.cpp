@@ -1,5 +1,5 @@
 //
-// Created by helywin on 2021/9/1.
+// Created by jiang on 2021/9/23.
 //
 
 #include "imgui.h"
@@ -27,6 +27,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Shader.hpp"
+#include "Model.hpp"
+#include "Mesh.hpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -43,76 +45,15 @@ void counterClockWise();
 
 // settings
 unsigned int SCR_WIDTH = 800;
-unsigned int SCR_HEIGHT = 600;
-GLuint VAO;
-GLuint lightVAO;
-GLuint VBO;
-GLuint EBO;
+unsigned int SCR_HEIGHT = 800;
+
 std::shared_ptr<Shader> shader;
-std::shared_ptr<Shader> lightShader;
-GLuint texture1;
-GLuint texture2;
+std::shared_ptr<Model> gModelBridgeX;
+std::shared_ptr<Model> gModelBridgeY;
+std::shared_ptr<Model> gModelCrane;
+std::shared_ptr<Model> gModelGrab;
+std::shared_ptr<Model> gModelRope;
 float transparent = 0.2f;
-
-// 位置, 纹理
-float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f
-};
-
-glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-};
-
-
 // 位置向量
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 // 方向向量
@@ -128,6 +69,9 @@ ImVec4 cubeColor(1.0f, 1.0f, 1.0f, 1.0f);
 float ambientStrength = 0.1f;
 float specularStrength = 0.5f;
 int shininess = 5;
+float bridgeXPos = 0;
+float bridgeYPos = 0;
+float bridgeZPos = 0;
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -209,8 +153,8 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on M
             ImGui::ColorEdit3("clear color", (float *) &clearColor);
             ImGui::ColorEdit3("light color", (float *) &cubeColor);
             ImGui::ColorEdit3("object color", (float *) &terrainColor);
-            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
-            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
+//            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
+//            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
             ImGui::SliderInt((std::string("shininess: 2^") + std::to_string(shininess)).c_str(),
                              &shininess, 1, 8);
             ImGui::End();
@@ -242,84 +186,23 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 void init()
 {
+    gModelBridgeX = std::make_shared<Model>(RES_DIR PATH_SEP "crane/bridge_x.obj");
+    gModelBridgeY = std::make_shared<Model>(RES_DIR PATH_SEP "crane/bridge_y.obj");
+    gModelCrane = std::make_shared<Model>(RES_DIR PATH_SEP "crane/crane.obj");
+    gModelGrab = std::make_shared<Model>(RES_DIR PATH_SEP "crane/grab.obj");
+    gModelRope = std::make_shared<Model>(RES_DIR PATH_SEP "crane/rope.obj");
+
     shader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_gui.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_gui.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "test_crane" PATH_SEP "material.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "test_crane" PATH_SEP "material.frag"
     );
-
-    lightShader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_source.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "7_light" PATH_SEP "light_source.frag"
-    );
-
-    glGenBuffers(1, &VBO);
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                          (void *) (3 * sizeof(float)));
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    //    glEnableVertexAttribArray(1);
-
-    // 加载时上下翻转图片
-    stbi_set_flip_vertically_on_load(true);
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load(RES_DIR
-                                    PATH_SEP "container.jpg", &width, &height, &nrChannels,
-                                    0);
-    if (!data) {
-        std::cout << "load image failed!" << std::endl;
-        exit(-1);
-    }
-
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    // 为当前绑定的纹理对象设置环绕、过滤方式
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-
-
-    data = stbi_load(RES_DIR
-                     PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
-    if (!data) {
-        std::cout << "load image failed!" << std::endl;
-        exit(-1);
-    }
-
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
 
     // 设置不同的texture对应的采样器id
     shader->use();
-    glUniform1i(glGetUniformLocation(shader->ID, "texture1"), 0);
-    glUniform1i(glGetUniformLocation(shader->ID, "texture2"), 1);
-    glUniform1f(glGetUniformLocation(shader->ID, "transparent"), transparent);
+    shader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+    shader->setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    shader->setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
     glm::mat4 trans = glm::mat4(1.0f);
 
@@ -339,11 +222,6 @@ void init()
     shader->setMatrix4fv("view", glm::value_ptr(view));
     shader->setMatrix4fv("projection", glm::value_ptr(projection));
 
-    lightShader->use();
-    lightShader->setMatrix4fv("transform", glm::value_ptr(trans));
-    lightShader->setMatrix4fv("model", glm::value_ptr(model));
-    lightShader->setMatrix4fv("view", glm::value_ptr(view));
-    lightShader->setMatrix4fv("projection", glm::value_ptr(projection));
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -351,36 +229,36 @@ void draw()
 {
     glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    glBindVertexArray(VAO);
     shader->use();
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-    shader->setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
-    shader->setFloat("ambientStrength", ambientStrength);
-    shader->setFloat("specularStrength", specularStrength);
-    shader->setFloat("shininess", (float)pow(2, shininess));
-    shader->setVec3("objectColor", terrainColor.x, terrainColor.y, terrainColor.z);
-    shader->setVec3("lightColor", cubeColor.x, cubeColor.y, cubeColor.z);
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 model = glm::mat4(1.0f);
-    shader->setMatrix4fv("model", glm::value_ptr(model));
     shader->setMatrix4fv("view", glm::value_ptr(view));
     shader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    gModelBridgeX->draw(*shader);
 
-    glBindVertexArray(lightVAO);
-    lightShader->use();
-    lightShader->setVec3("lightColor", cubeColor.x, cubeColor.y, cubeColor.z);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f));
-    lightShader->setMatrix4fv("model", glm::value_ptr(model));
-    lightShader->setMatrix4fv("view", glm::value_ptr(view));
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(bridgeXPos, 0, 0));
+    shader->setMatrix4fv("transform", glm::value_ptr(transform));
+    gModelBridgeY->draw(*shader);
+
+    transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(bridgeXPos, 0, bridgeYPos));
+    shader->setMatrix4fv("transform", glm::value_ptr(transform));
+    gModelCrane->draw(*shader);
+
+    transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(bridgeXPos, bridgeZPos, bridgeYPos));
+    shader->setMatrix4fv("transform", glm::value_ptr(transform));
+    gModelGrab->draw(*shader);
+
+
+    transform = glm::scale(transform, glm::vec3(1, 1, 0.5));
+    shader->setMatrix4fv("transform", glm::value_ptr(transform));
+    gModelRope->draw(*shader);
+
+    transform = glm::mat4(1.0f);
+    shader->setMatrix4fv("transform", glm::value_ptr(transform));
+    //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 }
 
 float step = 0.02f;
@@ -404,21 +282,11 @@ void sub()
 void clockWise()
 {
     angle += 10;
-    std::cout << "angle: " << angle << std::endl;
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    shader->use();
-    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 void counterClockWise()
 {
     angle -= 10;
-    std::cout << "angle: " << angle << std::endl;
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
-    shader->use();
-    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 //float cameraSpeed = 0.05f;
@@ -444,20 +312,27 @@ void processInput(GLFWwindow *window)
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     float cameraSpeed = deltaTime * 2.5f;
+    float bridgeSpeed = deltaTime * 2.0f;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        add();
+        bridgeYPos += bridgeSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        sub();
+        bridgeYPos -= bridgeSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        clockWise();
+        bridgeXPos += bridgeSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        counterClockWise();
+        bridgeXPos -= bridgeSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        bridgeZPos += bridgeSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        bridgeZPos -= bridgeSpeed;
     }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * cameraFront;

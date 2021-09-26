@@ -60,8 +60,8 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float angle = 0;
 
 ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
-ImVec4 objectColor(1.0f, 0.5f, 0.31f, 1.0f);
-ImVec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
+ImVec4 terrainColor(1.0f, 0.5f, 0.31f, 1.0f);
+ImVec4 cubeColor(1.0f, 1.0f, 1.0f, 1.0f);
 float ambientStrength = 0.1f;
 float specularStrength = 0.5f;
 int shininess = 5;
@@ -144,8 +144,8 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on M
         {
             ImGui::Begin("Settings");
             ImGui::ColorEdit3("clear color", (float *) &clearColor);
-            ImGui::ColorEdit3("light color", (float *) &lightColor);
-            ImGui::ColorEdit3("object color", (float *) &objectColor);
+            ImGui::ColorEdit3("light color", (float *) &cubeColor);
+            ImGui::ColorEdit3("object color", (float *) &terrainColor);
 //            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
 //            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
             ImGui::SliderInt((std::string("shininess: 2^") + std::to_string(shininess)).c_str(),

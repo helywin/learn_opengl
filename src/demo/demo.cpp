@@ -60,8 +60,8 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float angle = 0;
 
 ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
-ImVec4 objectColor(1.0f, 0.5f, 0.31f, 1.0f);
-ImVec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
+ImVec4 terrainColor(1.0f, 0.5f, 0.31f, 1.0f);
+ImVec4 cubeColor(1.0f, 1.0f, 1.0f, 1.0f);
 float ambientStrength = 0.1f;
 float specularStrength = 0.5f;
 int shininess = 5;
@@ -144,12 +144,15 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on M
         {
             ImGui::Begin("Settings");
             ImGui::ColorEdit3("clear color", (float *) &clearColor);
-            ImGui::ColorEdit3("light color", (float *) &lightColor);
-            ImGui::ColorEdit3("object color", (float *) &objectColor);
+            ImGui::ColorEdit3("light color", (float *) &cubeColor);
+            ImGui::ColorEdit3("object color", (float *) &terrainColor);
 //            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
 //            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
             ImGui::SliderInt((std::string("shininess: 2^") + std::to_string(shininess)).c_str(),
                              &shininess, 1, 8);
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                        1000.0f / ImGui::GetIO().Framerate,
+                        ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
@@ -181,7 +184,7 @@ void init()
 {
 //    gModel = std::make_shared<Model>(RES_DIR PATH_SEP "gun/Handgun_obj.obj");
 //    gModel = std::make_shared<Model>("/home/jiang/resource/ku/ku-02.obj");
-    gModel = std::make_shared<Model>("D:/obj/cube.fbx");
+    gModel = std::make_shared<Model>("D:/obj/ku/ku.fbx");
 
     shader = std::make_shared<Shader>(
             ROOT_PATH PATH_SEP "src" PATH_SEP "demo" PATH_SEP "material.vert",
@@ -196,7 +199,6 @@ void init()
     shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
     glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::scale(trans, glm::vec3(0.001, 0.001, 0.001));
 //    trans = glm::rotate(trans, glm::degrees(270.0f), glm::vec3(1, 0, 0));
 
     glm::mat4 model = glm::mat4(1.0f);

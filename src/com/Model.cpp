@@ -43,6 +43,9 @@ void ModelPrivate::loadModel(const std::string &path)
     processNode(scene->mRootNode, scene);
     std::cout << scene->mNumMeshes << " meshes, "
               << scene->mNumLights << " lights, "
+              << scene->mNumCameras << " cameras, "
+              << scene->mNumAnimations << " animations, "
+              << scene->mNumMaterials << " materials, "
               << std::endl;
 }
 
