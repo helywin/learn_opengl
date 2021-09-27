@@ -13,6 +13,8 @@ graph TD;
 > OpenGL中的一个片段是OpenGL渲染一个像素所需的所有数据。
 >
 > 片段着色器的主要目的是计算一个像素的最终颜色
+>
+> OpenGL扩展:https://www.khronos.org/registry/OpenGL/index_gl.php
 
 ## 顶点缓冲对象VBO
 
@@ -1187,3 +1189,406 @@ glStencilMask(0x00); // 每一位都不可以被修改，即禁用模板缓冲�
  2、绘制物体并更新模板值；
  3、禁用模板缓冲写入；
  4、修改模板测试条件：没有模板值得片段才通过测试，意味着这次绘制会丢弃掉之前绘制的物体区域（并不影响上次的绘制，只会影响接下来的绘制）
+
+>  模板测试还可以用来剔除镜子外面的内容
+
+# 混合
+
+实现透明度，通过alpha通道
+
+## 丢弃透明的片段
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D texture1;
+
+void main()
+{             
+    vec4 texColor = texture(texture1, TexCoords);
+    if(texColor.a < 0.1)
+        discard;
+    FragColor = texColor;
+}
+```
+
+> 注意，当采样纹理的边缘的时候，OpenGL会对边缘的值和纹理下一个重复的值进行插值（因为我们将它的环绕方式设置为了GL_REPEAT。这通常是没问题的，但是由于我们使用了透明值，纹理图像的顶部将会与底部边缘的纯色值进行插值。这样的结果是一个半透明的有色边框，你可能会看见它环绕着你的纹理四边形。要想避免这个，每当你alpha纹理的时候，请将纹理的环绕方式设置为GL_CLAMP_TO_EDGE：
+>
+> 
+
+```c++
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+```
+
+## 混合半透明的片段
+
+```c++
+// 启用
+glEnable(GL_BLEND);
+```
+
+混合方程：
+$$
+\begin{equation}\bar{C}_{result} = \bar{\color{green}C}_{source} * {\color{green}F}_{source} + \bar{\color{red}C}_{destination} * {\color{red}F}_{destination}\end{equation}
+$$
+
+- $\bar{\color{green}C}_{source}$：源颜色向量。这是源自纹理的颜色向量。
+- $\bar{\color{red}C}_{destination}$：目标颜色向量。这是当前储存在颜色缓冲中的颜色向量。
+- ${\color{green}F}_{source}$：源因子值。指定了alpha值对源颜色的影响。
+- ${\color{red}F}_{destination}$：目标因子值。指定了alpha值对目标颜色的影响。
+
+$$
+\begin{equation}\bar{C}_{result} = \begin{pmatrix} \color{red}{0.0} \\ \color{green}{1.0} \\ \color{blue}{0.0} \\ \color{purple}{0.6} \end{pmatrix} * {\color{green}{0.6}} + \begin{pmatrix} \color{red}{1.0} \\ \color{green}{0.0} \\ \color{blue}{0.0} \\ \color{purple}{1.0} \end{pmatrix} * \color{red}{(1 - 0.6)} \end{equation}
+$$
+
+$0.6$为$\bar{\color{green}C}_{source}$
+
+`glBlendFunc(GLenum sfactor, GLenum dfactor)`
+
+因子选项
+
+| 选项                          | 值                                                      |
+| ----------------------------- | ------------------------------------------------------- |
+| `GL_ZERO`                     | 因子等于0                                               |
+| `GL_ONE`                      | 因子等于1                                               |
+| `GL_SRC_COLOR`                | 因子等于源颜色向量$\bar{\color{green}C}_{source}$       |
+| `GL_ONE_MINUS_SRC_COLOR`      | 因子等于$1-\bar{\color{green}C}_{source}$               |
+| `GL_DST_COLOR`                | 因子等于目标颜色向量$\bar{\color{red}C}_{destination}$  |
+| `GL_ONE_MINUS_DST_COLOR`      | 因子等于$1-\bar{\color{red}C}_{destination}$            |
+| `GL_SRC_ALPHA`                | 因子等于$\bar{\color{green}C}_{source}$的alpha分量      |
+| `GL_ONE_MINUS_SRC_ALPHA`      | 因子等于$1-\bar{\color{green}C}_{source}$的alpha分量    |
+| `GL_DST_ALPHA`                | 因子等于$\bar{\color{red}C}_{destination}$的alpha分量   |
+| `GL_ONE_MINUS_DST_ALPHA`      | 因子等于$1-\bar{\color{red}C}_{destination}$的alpha分量 |
+| `GL_CONSTANT_COLOR`           | 因子等于常数颜色向量$\bar{\color{blue}C}_{constant}$    |
+| `GL_ONE_MINUS_CONSTANT_COLOR` | 因子等于$1-\bar{\color{blue}C}_{constant}$              |
+| `GL_CONSTANT_ALPHA`           | 因子等于$\bar{\color{blue}C}_{constant}$的alpha分量     |
+| `GL_ONE_MINUS_CONSTANT_ALPHA` | 因子等于$1-\bar{\color{blue}C}_{constant}$的alpha分量   |
+
+可以使用`glBlendFuncSeparate`为RGB通道和alpha通道设置不同的选项
+
+```c++
+glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+```
+
+可以使用`glBlendEquation(GLenum mode)`来设置运算符，修改$\bar{C}_{result}$
+
+- GL_FUNC_ADD：默认选项，将两个分量相加：$\bar{C}_{result}=\color{green}Src+\color{red}Dst$
+
+- GL_FUNC_SUBTRACT：将两个分量相减： $\bar{C}_{result}=\color{green}Src-\color{red}Dst$
+
+- GL_FUNC_REVERSE_SUBTRACT：将两个分量相减，但顺序相反：$\bar{C}_{result}=\color{red}Dst-\color{green}Src$
+
+> 可以结合Photoshop图层叠加方法来找到对应的混合函数
+
+## 渲染半透明纹理
+
+```c++
+// 启用混合
+glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+```
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D texture1;
+
+void main()
+{
+    // 不需要丢弃片段
+    FragColor = texture(texture1, TexCoords);
+}
+```
+
+## 不要打乱顺序
+
+![顺序不对](https://learnopengl-cn.github.io/img/04/03/blending_incorrect_order.png)
+
+由于绘制物体的顺序不对，深度测试时会丢掉被挡住的部分，而不是进行混合
+
+原则：
+
+1. 先绘制所有不透明的物体。
+2. 对所有透明的物体排序。
+3. 按顺序绘制所有透明的物体。
+
+> 更高级的技术还有次序无关透明度(Order Independent Transparency, OIT)
+
+# 面剔除
+
+OpenGL根据顶点的环绕顺序判断该面是否需要绘制，比如实体内部的面是不需要进行绘制的，被遮挡。
+
+## 环绕顺序
+
+![环绕顺序](https://learnopengl-cn.github.io/img/04/04/faceculling_windingorder.png)
+
+顶点数组里面的顺序决定了环绕顺序
+
+```c++
+// 启用
+glEnable(GL_CULL_FACE);
+```
+
+`glCullFace(GL_FRONT)`
+
+- `GL_BACK`：只剔除背向面。
+- `GL_FRONT`：只剔除正向面。
+- `GL_FRONT_AND_BACK`：剔除正向面和背向面。
+
+`glFrontFace(GL_CCW)`
+
+- `GL_CCW`：逆时针
+- `GL_CW`：顺时针
+
+# 帧缓冲
+
+相当于大的缓冲单元，包含颜色、深度、模板等
+
+## 创建
+
+```c++
+// 创建
+unsigned int fbo;
+glGenFramebuffers(1, &fbo);
+// 绑定
+glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+// 检查是否完整
+if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+// 绑定
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+// 删除
+glDeleteFramebuffers(1, &fbo);
+```
+
+## 纹理附件
+
+纹理附加到帧缓冲，渲染会写到纹理中，图像，可以再次利用着色器使用纹理
+
+```c++
+unsigned int texture;
+glGenTextures(1, &texture);
+glBindTexture(GL_TEXTURE_2D, texture);
+
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+```
+
+纹理的data传入的是空指针，分配内存但是没有填充
+
+```c++
+// 把纹理附件附加到帧缓冲
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+```
+
+参数：
+
+- `target`：帧缓冲的目标（绘制、读取或者两者皆有）
+- `attachment`：我们想要附加的附件类型。当前我们正在附加一个颜色附件。注意最后的`0`意味着我们可以附加多个颜色附件。我们将在之后的教程中提到。
+- `textarget`：你希望附加的纹理类型
+- `texture`：要附加的纹理本身
+- `level`：多级渐远纹理的级别。我们将它保留为0。
+
+还可以把深度和模板缓冲对象附加进去
+
+- 深度缓冲类型是`GL_DEPTH_ATTACHMENT`，格式是`GL_DEPTH_COMPONENT`
+- 模板缓冲类型是`GL_STENCIL_ATTACHMENT`，格式是`GL_STENCIL_INDEX`
+
+也可以把深度缓冲和模板缓冲用一个纹理设置
+
+```c++
+// 纹理的32位包含24位深度信息和8位模板信息
+glTexImage2D(
+  GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, 800, 600, 0, 
+  GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL
+);
+
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
+```
+
+## 渲染缓冲对象附件
+
+渲染缓冲对象，离屏渲染，可以用`glReadPixels`读取像素，他的数据是原生格式，交换缓冲区速度非常快，每次渲染迭代后使用`glfwSwapBuffers`
+
+```c++
+// 创建
+unsigned int rbo;
+glGenRenderbuffers(1, &rbo);
+
+// 绑定
+glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+// 创建深度和模板渲染缓冲对象
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+// 附加对象
+glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+```
+
+<mark>选择：</mark>
+
+- 不需要对缓冲中采样数据而是直接使用，则使用渲染缓冲对象
+- 需要对缓冲中采样数据而是直接使用，则使用纹理附件
+
+## 渲染到纹理
+
+```c++
+unsigned int framebuffer;
+glGenFramebuffers(1, &framebuffer);
+glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+// 生成纹理
+unsigned int texColorBuffer;
+glGenTextures(1, &texColorBuffer);
+glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+glBindTexture(GL_TEXTURE_2D, 0);
+
+// 将它附加到当前绑定的帧缓冲对象
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);  
+
+unsigned int rbo;
+glGenRenderbuffers(1, &rbo);
+glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);  
+glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+// 绘制
+// 第一处理阶段(Pass)
+glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 我们现在不使用模板缓冲
+glEnable(GL_DEPTH_TEST);
+DrawScene();    
+
+// 第二处理阶段
+glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认
+glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+glClear(GL_COLOR_BUFFER_BIT);
+
+screenShader.use();  
+glBindVertexArray(quadVAO);
+glDisable(GL_DEPTH_TEST);
+glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+glDrawArrays(GL_TRIANGLES, 0, 6);  
+```
+
+## 后期处理
+
+可以对片元渲染器添加计算改变颜色
+
+由于渲染的是纹理，还可以做图像处理
+
+```glsl
+const float offset = 1.0 / 300.0;  
+
+void main()
+{
+    vec2 offsets[9] = vec2[](
+        vec2(-offset,  offset), // 左上
+        vec2( 0.0f,    offset), // 正上
+        vec2( offset,  offset), // 右上
+        vec2(-offset,  0.0f),   // 左
+        vec2( 0.0f,    0.0f),   // 中
+        vec2( offset,  0.0f),   // 右
+        vec2(-offset, -offset), // 左下
+        vec2( 0.0f,   -offset), // 正下
+        vec2( offset, -offset)  // 右下
+    );
+
+    float kernel[9] = float[](
+        -1, -1, -1,
+        -1,  9, -1,
+        -1, -1, -1
+    );
+
+    vec3 sampleTex[9];
+    for(int i = 0; i < 9; i++)
+    {
+        sampleTex[i] = vec3(texture(screenTexture, TexCoords.st + offsets[i]));
+    }
+    vec3 col = vec3(0.0);
+    for(int i = 0; i < 9; i++)
+        col += sampleTex[i] * kernel[i];
+
+    FragColor = vec4(col, 1.0);
+}
+```
+
+可以用高斯核，拉普拉斯等做锐化糊化等，sobel算子提取边缘
+
+# 立方体贴图
+
+包含6个2D纹理的纹理，每个2D纹理都组成立方体一个面
+
+![立方体贴图](https://learnopengl-cn.github.io/img/04/06/cubemaps_sampling.png)
+
+根据向量的三个方向的分量来进行采样
+
+```c++
+// 创建
+unsigned int textureID;
+glGenTextures(1, &textureID);
+glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+```
+
+| 纹理目标                         | 方位 |
+| -------------------------------- | ---- |
+| `GL_TEXTURE_CUBE_MAP_POSITIVE_X` | 右   |
+| `GL_TEXTURE_CUBE_MAP_NEGATIVE_X` | 左   |
+| `GL_TEXTURE_CUBE_MAP_POSITIVE_Y` | 上   |
+| `GL_TEXTURE_CUBE_MAP_NEGATIVE_Y` | 下   |
+| `GL_TEXTURE_CUBE_MAP_POSITIVE_Z` | 后   |
+| `GL_TEXTURE_CUBE_MAP_NEGATIVE_Z` | 前   |
+
+
+
+```c++
+// 调用6次
+glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+```
+
+设置纹理采样
+
+```c++
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+```
+
+shader使用
+
+```glsl
+in vec3 textureDir; // 代表3D纹理坐标的方向向量
+uniform samplerCube cubemap; // 立方体贴图的纹理采样器
+
+void main()
+{             
+    FragColor = texture(cubemap, textureDir);
+}
+```
+
+## 天空盒
+
+![skybox](https://learnopengl-cn.github.io/img/04/06/cubemaps_skybox.png)
+

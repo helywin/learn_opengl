@@ -99,6 +99,7 @@ Mesh ModelPrivate::processMesh(aiMesh *mesh, const aiScene *scene)
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial *mat = scene->mMaterials[mesh->mMaterialIndex];
         aiColor3D color;
+        int shininess;
         if (mat->Get(AI_MATKEY_COLOR_AMBIENT, color) == aiReturn_SUCCESS) {
             material.ambient.x = color.r;
             material.ambient.y = color.g;
@@ -109,12 +110,23 @@ Mesh ModelPrivate::processMesh(aiMesh *mesh, const aiScene *scene)
             material.diffuse.y = color.g;
             material.diffuse.z = color.b;
         }
+        if (mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == aiReturn_SUCCESS) {
+            material.specular.x = color.r;
+            material.specular.y = color.g;
+            material.specular.z = color.b;
+        }
+        mat->Get(AI_MATKEY_SHININESS, material.shininess);
+
         std::vector<Texture> diffuseMaps = loadMaterialTextures(mat, aiTextureType_DIFFUSE,
                                                                 "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         std::vector<Texture> specularMaps = loadMaterialTextures(mat, aiTextureType_SPECULAR,
                                                                  "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        std::vector<Texture> specularNormals = loadMaterialTextures(mat, aiTextureType_NORMALS,
+                                                                 "texture_normals");
+        textures.insert(textures.end(), specularNormals.begin(), specularNormals.end());
+        material.textures = std::move(textures);
     }
     return Mesh{std::move(vertices),
                 std::move(indices),

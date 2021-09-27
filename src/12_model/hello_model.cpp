@@ -190,7 +190,7 @@ void init()
     shader->use();
     shader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
     shader->setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    shader->setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    shader->setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
     shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
     glm::mat4 trans = glm::mat4(1.0f);
@@ -216,6 +216,10 @@ void init()
 
 void draw()
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader->use();
