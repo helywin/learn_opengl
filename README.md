@@ -13,6 +13,7 @@ vcpkg
 ```
 vcpkg install glfw3
 vcpkg install glad
+vcpkg install magnum
 ```
 
 ### Linux(Ubuntu)
@@ -42,6 +43,12 @@ sudo cp include/* -r /usr/local/include
 
 ```shell
 sudo apt install libglfw3-dev
+```
+
+4. magnum
+
+```shell
+sudo apt install magnum
 ```
 
 ## 编译

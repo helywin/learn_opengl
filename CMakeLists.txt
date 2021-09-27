@@ -75,6 +75,8 @@ add_compile_definitions(PATH_SEP="/" ROOT_PATH="${CMAKE_SOURCE_DIR}" RES_DIR="${
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+find_package(Magnum REQUIRED GL Shaders Sdl2Application)
+find_package(Corrade CONFIG REQUIRED Main)
 
 if (UNIX)
     set(ASSIMP assimp)
@@ -83,3 +85,4 @@ else ()
 endif ()
 
 add_subdirectory(src)
+add_subdirectory(magnum)

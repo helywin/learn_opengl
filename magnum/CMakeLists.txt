@@ -1,0 +1,2 @@
+add_subdirectory(m1_triangle)
+add_subdirectory(m2_shader)
