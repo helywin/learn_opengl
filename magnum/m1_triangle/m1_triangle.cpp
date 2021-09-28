@@ -11,10 +11,10 @@
 
 using namespace Magnum;
 
-class CustomSceneGraph : public Platform::Application
+class CustomCamera : public Platform::Application
 {
 public:
-    explicit CustomSceneGraph(const Arguments &arguments);
+    explicit CustomCamera(const Arguments &arguments);
 
 private:
     void drawEvent() override;
@@ -23,7 +23,7 @@ private:
     Shaders::VertexColor2D mShader;
 };
 
-CustomSceneGraph::CustomSceneGraph(const Arguments &arguments) :
+CustomCamera::CustomCamera(const Arguments &arguments) :
         Platform::Application{arguments, Configuration{}.setTitle("Triangle")}
 {
     using namespace Math::Literals;
@@ -49,7 +49,7 @@ CustomSceneGraph::CustomSceneGraph(const Arguments &arguments) :
                           Shaders::VertexColor2D::Color3{});
 }
 
-void CustomSceneGraph::drawEvent()
+void CustomCamera::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -59,4 +59,4 @@ void CustomSceneGraph::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomSceneGraph)
+MAGNUM_APPLICATION_MAIN(CustomCamera)

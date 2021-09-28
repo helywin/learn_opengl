@@ -78,10 +78,13 @@ set(WITH_OBJIMPORTER ON CACHE BOOL "" FORCE)
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+set(Magnum_GLFW_FOUND TRUE)
 find_package(Magnum REQUIRED
         GL
         Shaders
-        Sdl2Application
+#        Application
+#        Sdl2Application
+        GlfwApplication
         Trade
         SceneGraph
         MeshTools

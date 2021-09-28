@@ -71,10 +71,10 @@ void main()
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 }
 
-class CustomSceneGraph : public Platform::Application
+class CustomCamera : public Platform::Application
 {
 public:
-    explicit CustomSceneGraph(const Arguments &arguments);
+    explicit CustomCamera(const Arguments &arguments);
 
 private:
     void drawEvent() override;
@@ -83,7 +83,7 @@ private:
     CubeShader mShader;
 };
 
-CustomSceneGraph::CustomSceneGraph(const Arguments &arguments) :
+CustomCamera::CustomCamera(const Arguments &arguments) :
         Platform::Application{arguments, Configuration{}.setTitle("Shader")}
 {
     using namespace Math::Literals;
@@ -109,7 +109,7 @@ CustomSceneGraph::CustomSceneGraph(const Arguments &arguments) :
                           CubeShader::Color{});
 }
 
-void CustomSceneGraph::drawEvent()
+void CustomCamera::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -119,4 +119,4 @@ void CustomSceneGraph::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomSceneGraph)
+MAGNUM_APPLICATION_MAIN(CustomCamera)
