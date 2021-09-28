@@ -24,17 +24,17 @@
 
 using namespace Magnum;
 
-class TriangleShader : public GL::AbstractShaderProgram
+class CubeShader : public GL::AbstractShaderProgram
 {
 public:
     typedef GL::Attribute<0, Vector2> Position;
     typedef GL::Attribute<1, Vector3> Color;
 
-    explicit TriangleShader();
+    explicit CubeShader();
 
 };
 
-TriangleShader::TriangleShader()
+CubeShader::CubeShader()
 {
     MAGNUM_ASSERT_GL_VERSION_SUPPORTED(GL::Version::GL330);
 
@@ -71,20 +71,20 @@ void main()
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 }
 
-class CustomShader : public Platform::Application
+class CustomTexture : public Platform::Application
 {
 public:
-    explicit CustomShader(const Arguments &arguments);
+    explicit CustomTexture(const Arguments &arguments);
 
 private:
     void drawEvent() override;
 
     GL::Mesh mMesh;
-    TriangleShader mShader;
+    CubeShader mShader;
 };
 
-CustomShader::CustomShader(const Arguments &arguments) :
-        Platform::Application{arguments, Configuration{}.setTitle("Triangle")}
+CustomTexture::CustomTexture(const Arguments &arguments) :
+        Platform::Application{arguments, Configuration{}.setTitle("Shader")}
 {
     using namespace Math::Literals;
 
@@ -105,11 +105,11 @@ CustomShader::CustomShader(const Arguments &arguments) :
 
     mMesh.setCount(3);
     mMesh.addVertexBuffer(std::move(buffer), 0,
-                          TriangleShader::Position{},
-                          TriangleShader::Color{});
+                          CubeShader::Position{},
+                          CubeShader::Color{});
 }
 
-void CustomShader::drawEvent()
+void CustomTexture::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -119,4 +119,4 @@ void CustomShader::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomShader)
+MAGNUM_APPLICATION_MAIN(CustomTexture)

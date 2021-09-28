@@ -682,7 +682,7 @@ void main()
 法线矩阵：[文章](http://www.lighthouse3d.com/tutorials/glsl-tutorial/the-normal-matrix/)
 
 ```glsl
-Normal = mat3(transpose(inverse(model))) * aNormal;
+Color = mat3(transpose(inverse(model))) * aNormal;
 ```
 
 > 即使是对于着色器来说，逆矩阵也是一个开销比较大的运算，因此，只要可能就应该避免在着色器中进行逆矩阵运算，它们必须为你场景中的每个顶点都进行这样的处理。用作学习目这样做是可以的，但是对于一个对效率有要求的应用来说，在绘制之前你最好用CPU计算出法线矩阵，然后通过uniform把值传递给着色器（像模型矩阵一样）。
@@ -696,7 +696,7 @@ Normal = mat3(transpose(inverse(model))) * aNormal;
 先计算点到相机的向量，然后根据光源到点的向量利用`reflect`函数根据面法向量计算反射光向量，然后取内积
 
 ```glsl
-vec3 norm = normalize(Normal);
+vec3 norm = normalize(Color);
 vec3 lightDir = normalize(lightPos - FragPos);
 float diff = max(dot(norm, lightDir), 0.0);
 
@@ -742,7 +742,7 @@ struct Light {
 #version 330 core
 out vec4 FragColor;
 in vec2 TexCoord;
-in vec3 Normal;
+in vec3 Color;
 
 // real position in world axis
 in vec3 FragPos;
@@ -777,7 +777,7 @@ void main()
     vec3 ambient = light.ambient * texture(material.diffuse, TexCoord).rgb;
 
     // 漫反射
-    vec3 norm = normalize(Normal);
+    vec3 norm = normalize(Color);
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoord).rgb;
@@ -944,7 +944,7 @@ Assimp转化成自己的类用来调用OpenGL接口绘制
 // 顶点，使用了C++的内存对齐，大小为8个float
 struct Vertex {
     glm::vec3 Position;
-    glm::vec3 Normal;
+    glm::vec3 Color;
     glm::vec2 TexCoords;
 };
 
@@ -992,7 +992,7 @@ void setupMesh()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     // 顶点法线
     glEnableVertexAttribArray(1);   
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Color));
     // 顶点纹理坐标
     glEnableVertexAttribArray(2);   
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));

@@ -1,2 +1,3 @@
 add_subdirectory(m1_triangle)
 add_subdirectory(m2_shader)
+add_subdirectory(m3_texture)
