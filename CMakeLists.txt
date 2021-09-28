@@ -72,10 +72,23 @@ endif ()
 
 add_compile_definitions(PATH_SEP="/" ROOT_PATH="${CMAKE_SOURCE_DIR}" RES_DIR="${CMAKE_SOURCE_DIR}/res")
 
+set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+set(WITH_ANYSCENEIMPORTER ON CACHE BOOL "" FORCE)
+set(WITH_OBJIMPORTER ON CACHE BOOL "" FORCE)
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
-find_package(Magnum REQUIRED GL Shaders Sdl2Application Trade)
+find_package(Magnum REQUIRED
+        GL
+        Shaders
+        Sdl2Application
+        Trade
+        SceneGraph
+        MeshTools
+        AnyImageImporter
+        AnySceneImporter
+        )
+
 find_package(Corrade CONFIG REQUIRED Main)
 
 if (UNIX)

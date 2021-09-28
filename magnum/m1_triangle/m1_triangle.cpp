@@ -11,10 +11,10 @@
 
 using namespace Magnum;
 
-class CustomTexture : public Platform::Application
+class CustomSceneGraph : public Platform::Application
 {
 public:
-    explicit CustomTexture(const Arguments &arguments);
+    explicit CustomSceneGraph(const Arguments &arguments);
 
 private:
     void drawEvent() override;
@@ -23,7 +23,7 @@ private:
     Shaders::VertexColor2D mShader;
 };
 
-CustomTexture::CustomTexture(const Arguments &arguments) :
+CustomSceneGraph::CustomSceneGraph(const Arguments &arguments) :
         Platform::Application{arguments, Configuration{}.setTitle("Triangle")}
 {
     using namespace Math::Literals;
@@ -49,7 +49,7 @@ CustomTexture::CustomTexture(const Arguments &arguments) :
                           Shaders::VertexColor2D::Color3{});
 }
 
-void CustomTexture::drawEvent()
+void CustomSceneGraph::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -59,4 +59,4 @@ void CustomTexture::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomTexture)
+MAGNUM_APPLICATION_MAIN(CustomSceneGraph)
