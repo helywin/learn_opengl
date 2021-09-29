@@ -126,7 +126,6 @@ private:
     Object3D mCameraObject;
     SceneGraph::Camera3D *mCamera;
     SceneGraph::DrawableGroup3D mDrawables;
-    Vector3 mPreviousPosition;
 };
 
 CustomCamera::CustomCamera(const Arguments &arguments) :

@@ -83,7 +83,7 @@ find_package(Magnum REQUIRED
         GL
         Shaders
 #        Application
-#        Sdl2Application
+        Sdl2Application
         GlfwApplication
         Trade
         SceneGraph

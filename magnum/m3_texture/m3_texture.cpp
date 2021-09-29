@@ -24,14 +24,14 @@
 
 using namespace Magnum;
 
-class CubeShader : public GL::AbstractShaderProgram
+class MeshShader : public GL::AbstractShaderProgram
 {
 public:
     typedef GL::Attribute<0, Vector3> Position;
     typedef GL::Attribute<1, Vector2> TextureCoord;
 
-    explicit CubeShader();
-    CubeShader &bindTexture(GL::Texture2D &texture);
+    explicit MeshShader();
+    MeshShader &bindTexture(GL::Texture2D &texture);
 
     enum : Int
     {
@@ -41,7 +41,7 @@ public:
     Int mColorUniform;
 };
 
-CubeShader::CubeShader()
+MeshShader::MeshShader()
 {
     MAGNUM_ASSERT_GL_VERSION_SUPPORTED(GL::Version::GL330);
 
@@ -82,26 +82,26 @@ void main()
     setUniform(uniformLocation("texture1"), TextureUnit);
 }
 
-CubeShader &CubeShader::bindTexture(GL::Texture2D &texture)
+MeshShader &MeshShader::bindTexture(GL::Texture2D &texture)
 {
     texture.bind(TextureUnit);
     return *this;
 }
 
-class CustomCamera : public Platform::Application
+class CustomTexure : public Platform::Application
 {
 public:
-    explicit CustomCamera(const Arguments &arguments);
+    explicit CustomTexure(const Arguments &arguments);
 
 private:
     void drawEvent() override;
 
     GL::Mesh mMesh;
-    CubeShader mShader;
+    MeshShader mShader;
     GL::Texture2D mTexture;
 };
 
-CustomCamera::CustomCamera(const Arguments &arguments) :
+CustomTexure::CustomTexure(const Arguments &arguments) :
         Platform::Application{arguments, Configuration{}.setTitle("Texture").setSize({800, 800})}
 {
     using namespace Math::Literals;
@@ -161,8 +161,8 @@ CustomCamera::CustomCamera(const Arguments &arguments) :
 
     mMesh.setCount(36);
     mMesh.addVertexBuffer(std::move(buffer), 0,
-                          CubeShader::Position{},
-                          CubeShader::TextureCoord{});
+                          MeshShader::Position{},
+                          MeshShader::TextureCoord{});
 
     PluginManager::Manager<Trade::AbstractImporter> manager;
     Containers::Pointer<Trade::AbstractImporter> importer =
@@ -185,7 +185,7 @@ CustomCamera::CustomCamera(const Arguments &arguments) :
     mShader.bindTexture(mTexture);
 }
 
-void CustomCamera::drawEvent()
+void CustomTexure::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -195,4 +195,4 @@ void CustomCamera::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomCamera)
+MAGNUM_APPLICATION_MAIN(CustomTexure)

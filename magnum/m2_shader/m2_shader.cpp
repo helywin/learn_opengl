@@ -24,17 +24,17 @@
 
 using namespace Magnum;
 
-class CubeShader : public GL::AbstractShaderProgram
+class MeshShader : public GL::AbstractShaderProgram
 {
 public:
     typedef GL::Attribute<0, Vector2> Position;
     typedef GL::Attribute<1, Vector3> Color;
 
-    explicit CubeShader();
+    explicit MeshShader();
 
 };
 
-CubeShader::CubeShader()
+MeshShader::MeshShader()
 {
     MAGNUM_ASSERT_GL_VERSION_SUPPORTED(GL::Version::GL330);
 
@@ -71,19 +71,19 @@ void main()
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 }
 
-class CustomCamera : public Platform::Application
+class CustomShader : public Platform::Application
 {
 public:
-    explicit CustomCamera(const Arguments &arguments);
+    explicit CustomShader(const Arguments &arguments);
 
 private:
     void drawEvent() override;
 
     GL::Mesh mMesh;
-    CubeShader mShader;
+    MeshShader mShader;
 };
 
-CustomCamera::CustomCamera(const Arguments &arguments) :
+CustomShader::CustomShader(const Arguments &arguments) :
         Platform::Application{arguments, Configuration{}.setTitle("Shader")}
 {
     using namespace Math::Literals;
@@ -105,11 +105,11 @@ CustomCamera::CustomCamera(const Arguments &arguments) :
 
     mMesh.setCount(3);
     mMesh.addVertexBuffer(std::move(buffer), 0,
-                          CubeShader::Position{},
-                          CubeShader::Color{});
+                          MeshShader::Position{},
+                          MeshShader::Color{});
 }
 
-void CustomCamera::drawEvent()
+void CustomShader::drawEvent()
 {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
@@ -119,4 +119,4 @@ void CustomCamera::drawEvent()
     swapBuffers();
 }
 
-MAGNUM_APPLICATION_MAIN(CustomCamera)
+MAGNUM_APPLICATION_MAIN(CustomShader)
