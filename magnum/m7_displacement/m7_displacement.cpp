@@ -49,7 +49,6 @@ public:
     };
 public:
     typedef GL::Attribute<0, Vector3> Position;
-    typedef GL::Attribute<1, Vector2> TextureCoord;
 
     explicit MeshShader();
     void setViewMatrix(const Matrix4 &mat);
@@ -59,16 +58,24 @@ public:
 
 MeshShader::MeshShader()
 {
-    GL::Shader vert{GL::Version::GL330, GL::Shader::Type::Vertex};
-    GL::Shader frag{GL::Version::GL330, GL::Shader::Type::Fragment};
+    GL::Shader vert{GL::Version::GL410, GL::Shader::Type::Vertex};
+    GL::Shader tess{GL::Version::GL410, GL::Shader::Type::TessellationControl};
+    GL::Shader eval{GL::Version::GL410, GL::Shader::Type::TessellationEvaluation};
+    GL::Shader frag{GL::Version::GL410, GL::Shader::Type::Fragment};
 
     vert.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vert");
+    tess.addFile(ROOT_PATH "/magnum/m7_displacement/shader.tess");
+    eval.addFile(ROOT_PATH "/magnum/m7_displacement/shader.glsl");
     frag.addFile(ROOT_PATH "/magnum/m7_displacement/shader.frag");
 
     vert.compile();
+    tess.compile();
+    eval.compile();
     frag.compile();
 
     attachShader(vert);
+    attachShader(tess);
+    attachShader(eval);
     attachShader(frag);
 
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
@@ -126,26 +133,21 @@ void MeshGrid::setData()
 {
     GL::Buffer buffer;
 //    Debug{} << "begin set data" << d[size.x() * size.y() - 12431];
-    struct Vertex
-    {
-        Vector3 pos;
-        Vector2 textureCoord;
-    };
-    Vertex vertexes[] = {
-            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f,  -0.5f, 0.0f}, {1.0f, 0.0f}},
-            {{0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
-            {{0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
-            {{-0.5f, 0.5f,  0.0f}, {0.0f, 1.0f}},
-            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+
+    Vector3 vertexes[] = {
+            {{0.0f, 0.0f, 0.0f}},
+            {{1.0f, 0.0f, 0.0f}},
+            {{1.0f, 1.0f, 0.0f}},
+            {{1.0f, 1.0f, 0.0f}},
+            {{0.0f, 1.0f, 0.0f}},
+            {{0.0f, 0.0f, 0.0f}},
     };
     buffer.setData(vertexes, GL::BufferUsage::StaticDraw);
 
     mMesh.setPrimitive(MeshPrimitive::Triangles)
             .setCount(6)
             .addVertexBuffer(std::move(buffer), 0,
-                             MeshShader::Position{},
-                             MeshShader::TextureCoord{});
+                             MeshShader::Position{});
 }
 
 class CustomMesh : public Platform::Application
@@ -195,6 +197,7 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
+    GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
     PluginManager::Manager<Trade::AbstractImporter> manager;
     Containers::Pointer<Trade::AbstractImporter> importer =
             manager.loadAndInstantiate("StbImageImporter");
