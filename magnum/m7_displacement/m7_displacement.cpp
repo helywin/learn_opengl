@@ -15,6 +15,7 @@
 #include <Magnum/GL/Mesh.h>
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Texture.h>
+#include <Magnum/GL/BufferImage.h>
 #include <Magnum/GL/Version.h>
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/MeshTools/Compile.h>
@@ -42,11 +43,18 @@ using Scene3D = SceneGraph::Scene<SceneGraph::MatrixTransformation3D>;
 class MeshShader : public GL::AbstractShaderProgram
 {
 public:
+    enum : Int
+    {
+        TextureUnit = 0
+    };
+public:
     typedef GL::Attribute<0, Vector3> Position;
+    typedef GL::Attribute<1, Vector2> TextureCoord;
 
     explicit MeshShader();
     void setViewMatrix(const Matrix4 &mat);
     void setProjectionMatrix(const Matrix4 &mat);
+    MeshShader &bindTexture(GL::Texture2D &texture);
 };
 
 MeshShader::MeshShader()
@@ -54,8 +62,8 @@ MeshShader::MeshShader()
     GL::Shader vert{GL::Version::GL330, GL::Shader::Type::Vertex};
     GL::Shader frag{GL::Version::GL330, GL::Shader::Type::Fragment};
 
-    vert.addFile(ROOT_PATH "/magnum/m6_height_map/shader.vert");
-    frag.addFile(ROOT_PATH "/magnum/m6_height_map/shader.frag");
+    vert.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vert");
+    frag.addFile(ROOT_PATH "/magnum/m7_displacement/shader.frag");
 
     vert.compile();
     frag.compile();
@@ -66,20 +74,27 @@ MeshShader::MeshShader()
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 
     Matrix4 mat{Math::IdentityInit};
-    setUniform(0, mat);
-    setUniform(1, mat);
-    setUniform(2, mat);
-    setUniform(3, mat);
+    setUniform(uniformLocation("transform"), mat);
+    setUniform(uniformLocation("model"), mat);
+    setUniform(uniformLocation("view"), mat);
+    setUniform(uniformLocation("projection"), mat);
+    setUniform(uniformLocation("texture1"), TextureUnit);
 }
 
 void MeshShader::setViewMatrix(const Matrix4 &mat)
 {
-    setUniform(2, mat);
+    setUniform(uniformLocation("view"), mat);
 }
 
 void MeshShader::setProjectionMatrix(const Matrix4 &mat)
 {
-    setUniform(3, mat);
+    setUniform(uniformLocation("projection"), mat);
+}
+
+MeshShader &MeshShader::bindTexture(GL::Texture2D &texture)
+{
+    texture.bind(TextureUnit);
+    return *this;
 }
 
 class MeshGrid : public SceneGraph::Drawable3D
@@ -87,7 +102,7 @@ class MeshGrid : public SceneGraph::Drawable3D
 
 public:
     void draw(const Matrix4 &transformationMatrix, SceneGraph::Camera<3, Float> &camera) override;
-    void setData(const unsigned short *data, const Vector2i &size);
+    void setData();
 
     MeshGrid(Object3D &object, MeshShader &shader, SceneGraph::DrawableGroup3D &group) :
             SceneGraph::Drawable3D{object, &group},
@@ -107,39 +122,30 @@ void MeshGrid::draw(const Matrix4 &transformationMatrix, SceneGraph::Camera<3, F
     mShader.draw(mMesh);
 }
 
-void MeshGrid::setData(const unsigned short *data, const Vector2i &size)
+void MeshGrid::setData()
 {
     GL::Buffer buffer;
 //    Debug{} << "begin set data" << d[size.x() * size.y() - 12431];
-    int realRow = size.y() - size.y() % 2;
-    auto vertexData = new Containers::Array<Vector3>(size.x() * realRow * 2);
-    int count = 0;
-    bool inverse = false;
-    for (int row = 0; row < realRow - 1; ++row) {
-        int colStart = 0;
-        int colEnd = size.x();
-        int colStep = 1;
-        if (inverse) {
-            std::swap(colStart, colEnd);
-            colStep = -colStep;
-        }
-        for (int col = colStart; col != colEnd; col += colStep) {
-            int index = row * size.x() + col;
-            (*vertexData)[count++] = {col / 600.0f, row / 760.0f,
-                                      1 - data[index] / 3500.0f};
-            (*vertexData)[count++] = {col / 600.0f, (row + 1) / 760.0f,
-                                      1 - data[index + size.x()] / 3500.0f};
-        }
-        inverse = !inverse;
-    }
-    buffer.setData(*vertexData, GL::BufferUsage::StaticDraw);
+    struct Vertex
+    {
+        Vector3 pos;
+        Vector2 textureCoord;
+    };
+    Vertex vertexes[] = {
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f,  -0.5f, 0.0f}, {1.0f, 0.0f}},
+            {{0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
+            {{0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
+            {{-0.5f, 0.5f,  0.0f}, {0.0f, 1.0f}},
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+    };
+    buffer.setData(vertexes, GL::BufferUsage::StaticDraw);
 
-    GL::Buffer index;
-
-    mMesh.setPrimitive(MeshPrimitive::TriangleStrip)
-            .setCount(vertexData->size())
-            .addVertexBuffer(std::move(buffer), 0, MeshShader::Position{});
-    Debug{} << "end set data";
+    mMesh.setPrimitive(MeshPrimitive::Triangles)
+            .setCount(6)
+            .addVertexBuffer(std::move(buffer), 0,
+                             MeshShader::Position{},
+                             MeshShader::TextureCoord{});
 }
 
 class CustomMesh : public Platform::Application
@@ -167,6 +173,7 @@ private:
     SceneGraph::DrawableGroup3D mDrawables;
     MeshShader mShader;
     MeshGrid *mMeshGrid;
+    GL::Texture2D mTexture;
 };
 
 CustomMesh::CustomMesh(const Arguments &arguments) :
@@ -195,15 +202,28 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
         Error{} << "load importer failed";
         exit(-1);
     }
+//    importer->openFile(RES_DIR "/height_short_mat_5.png");
+    importer->openFile(RES_DIR "/displacement.png");
+    Debug{} << importer->image2D(0)->format();
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+
     int width;
     int height;
     int nrComponents;
-    unsigned short *data = stbi_load_16(RES_DIR "/height_short_mat_5.png", &width, &height,
+    unsigned short *data = stbi_load_16(RES_DIR "/height_short_mat_srgb.png", &width, &height,
                                         &nrComponents, 0);
-
+//    GL::BufferImage<2> image(PixelFormat::R16Unorm, GL::PixelType::UnsignedShort, )
+//mTexture.setImage()
+    mTexture.setWrapping(GL::SamplerWrapping::ClampToEdge)
+            .setMagnificationFilter(GL::SamplerFilter::Linear)
+            .setMinificationFilter(GL::SamplerFilter::Linear)
+            .setStorage(1, GL::textureFormat(image->format()), image->size())
+            .setSubImage(0, {}, *image);
+    mShader.bindTexture(mTexture);
     auto *object = new Object3D{&mManipulator};
     mMeshGrid = new MeshGrid{*object, mShader, mDrawables};
-    mMeshGrid->setData(data, Vector2i{width, height});
+    mMeshGrid->setData();
 }
 
 void CustomMesh::drawEvent()
