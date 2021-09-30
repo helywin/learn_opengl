@@ -5,6 +5,7 @@
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -47,6 +48,16 @@ public:
     {
         TextureUnit = 0
     };
+
+    enum : Int
+    {
+        Uniform_model = 0,
+        Uniform_translation = 1,
+        Uniform_view = 2,
+        Uniform_projection = 3,
+        Uniform_displacement = 4,
+    };
+
 public:
     typedef GL::Attribute<0, Vector3> Position;
 
@@ -58,48 +69,44 @@ public:
 
 MeshShader::MeshShader()
 {
-    GL::Shader vs{GL::Version::GL410, GL::Shader::Type::Vertex};
-    GL::Shader cs{GL::Version::GL410, GL::Shader::Type::TessellationControl};
-    GL::Shader es{GL::Version::GL410, GL::Shader::Type::TessellationEvaluation};
-    GL::Shader gs{GL::Version::GL410, GL::Shader::Type::Geometry};
-    GL::Shader fs{GL::Version::GL410, GL::Shader::Type::Fragment};
+    GL::Shader vs{GL::Version::GL420, GL::Shader::Type::Vertex};
+    GL::Shader cs{GL::Version::GL420, GL::Shader::Type::TessellationControl};
+    GL::Shader es{GL::Version::GL420, GL::Shader::Type::TessellationEvaluation};
+//    GL::Shader gs{GL::Version::GL420, GL::Shader::Type::Geometry};
+    GL::Shader fs{GL::Version::GL420, GL::Shader::Type::Fragment};
 
     vs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vs.glsl");
     cs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.cs.glsl");
     es.addFile(ROOT_PATH "/magnum/m7_displacement/shader.es.glsl");
-    gs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.gs.glsl");
+//    gs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.gs.glsl");
     fs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.fs.glsl");
 
-    vs.compile();
-    cs.compile();
-    es.compile();
-    gs.compile();
-    fs.compile();
+    ;
+    CORRADE_INTERNAL_ASSERT_OUTPUT(GL::Shader::compile(
+            {vs, cs, es, fs}
+    ));
 
-    attachShader(vs);
-    attachShader(cs);
-    attachShader(es);
-    attachShader(gs);
-    attachShader(fs);
+    attachShaders({vs, cs, es, fs});
 
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 
     Matrix4 mat{Math::IdentityInit};
-    setUniform(uniformLocation("transform"), mat);
-    setUniform(uniformLocation("model"), mat);
-    setUniform(uniformLocation("view"), mat);
-    setUniform(uniformLocation("projection"), mat);
-    setUniform(uniformLocation("texture1"), TextureUnit);
+
+    setUniform(Uniform_model, mat);
+    setUniform(Uniform_translation, mat);
+    setUniform(Uniform_view, mat);
+    setUniform(Uniform_projection, mat);
+    setUniform(Uniform_displacement, TextureUnit);
 }
 
 void MeshShader::setViewMatrix(const Matrix4 &mat)
 {
-    setUniform(uniformLocation("view"), mat);
+    setUniform(Uniform_view, mat);
 }
 
 void MeshShader::setProjectionMatrix(const Matrix4 &mat)
 {
-    setUniform(uniformLocation("projection"), mat);
+    setUniform(Uniform_projection, mat);
 }
 
 MeshShader &MeshShader::bindTexture(GL::Texture2D &texture)
@@ -110,7 +117,6 @@ MeshShader &MeshShader::bindTexture(GL::Texture2D &texture)
 
 class MeshGrid : public SceneGraph::Drawable3D
 {
-
 public:
     void draw(const Matrix4 &transformationMatrix, SceneGraph::Camera<3, Float> &camera) override;
     void setData();
@@ -139,16 +145,16 @@ void MeshGrid::setData()
 //    Debug{} << "begin set data" << d[size.x() * size.y() - 12431];
 
     Vector3 vertexes[] = {
-            {{0.0f, 0.0f, 0.0f}},
-            {{1.0f, 0.0f, 0.0f}},
-            {{1.0f, 1.0f, 0.0f}},
-            {{1.0f, 1.0f, 0.0f}},
-            {{0.0f, 1.0f, 0.0f}},
-            {{0.0f, 0.0f, 0.0f}},
+            {0.0f, 0.0f, 0.0f},
+            {1.0f, 0.0f, 0.0f},
+            {1.0f, 1.0f, 0.0f},
+            {1.0f, 1.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f},
     };
     buffer.setData(vertexes, GL::BufferUsage::StaticDraw);
 
-    mMesh.setPrimitive(MeshPrimitive::Triangles)
+    mMesh.setPrimitive(GL::MeshPrimitive::Patches)
             .setCount(6)
             .addVertexBuffer(std::move(buffer), 0,
                              MeshShader::Position{});
@@ -200,8 +206,9 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
     mManipulator.setParent(&mScene);
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
-    GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
-    GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
+    GL::Renderer::setPatchVertexCount(3);
+//    GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
+//    GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
     PluginManager::Manager<Trade::AbstractImporter> manager;
     Containers::Pointer<Trade::AbstractImporter> importer =
             manager.loadAndInstantiate("StbImageImporter");
@@ -238,7 +245,8 @@ void CustomMesh::drawEvent()
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
     using namespace Math::Literals;
-    mCamera->draw(mDrawables);
+    mShader.draw(mMeshGrid->mMesh);
+    Debug{} << "error:" << Magnum::GL::Renderer::error();
     swapBuffers();
 }
 
