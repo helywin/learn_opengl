@@ -31,35 +31,34 @@ using namespace Magnum;
 class MeshShader : public GL::AbstractShaderProgram
 {
 public:
+    enum : Int
+    {
+        TextureUnit = 0
+    };
+
+    enum : Int
+    {
+        Uniform_model = 0,
+        Uniform_translation = 1,
+        Uniform_view = 2,
+        Uniform_projection = 3,
+        Uniform_displacement = 4,
+    };
+public:
     typedef GL::Attribute<0, Vector4> Position;
     typedef GL::Attribute<1, Vector3> Color;
 
     explicit MeshShader();
-
+    MeshShader &bindTexture(GL::Texture2D &texture);
 };
 
-//#define NORMAL
+
 
 MeshShader::MeshShader()
 {
     MAGNUM_ASSERT_GL_VERSION_SUPPORTED(GL::Version::GL420);
     MAGNUM_ASSERT_GL_EXTENSION_SUPPORTED(GL::Extensions::ARB::tessellation_shader);
 
-
-#ifdef NORMAL
-    GL::Shader vs{GL::Version::GL420, GL::Shader::Type::Vertex};
-    GL::Shader fs{GL::Version::GL420, GL::Shader::Type::Fragment};
-    vs.addFile(ROOT_PATH "/magnum/m8_tessellation/normal.vs.glsl");
-    fs.addFile(ROOT_PATH "/magnum/m8_tessellation/normal.fs.glsl");
-
-    CORRADE_INTERNAL_ASSERT_OUTPUT(GL::Shader::compile(
-            {vs,
-             fs}
-    ));
-
-    attachShaders({vs,
-                   fs});
-#else
     GL::Shader vs{GL::Version::GL420, GL::Shader::Type::Vertex};
     GL::Shader cs{GL::Version::GL420, GL::Shader::Type::TessellationControl};
     GL::Shader es{GL::Version::GL420, GL::Shader::Type::TessellationEvaluation};
@@ -81,10 +80,16 @@ MeshShader::MeshShader()
                    cs,
                    es,
                    fs});
-#endif
 
 
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
+    setUniform(0, TextureUnit);
+}
+
+MeshShader &MeshShader::bindTexture(GL::Texture2D &texture)
+{
+    texture.bind(TextureUnit);
+    return *this;
 }
 
 class CustomTessellation : public Platform::Application
@@ -97,6 +102,7 @@ private:
 
     GL::Mesh mMesh;
     MeshShader mShader;
+    GL::Texture2D mTexture;
 };
 
 CustomTessellation::CustomTessellation(const Arguments &arguments) :
@@ -128,6 +134,28 @@ CustomTessellation::CustomTessellation(const Arguments &arguments) :
                           MeshShader::Position{});
     GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
     GL::Renderer::setPatchVertexCount(4);
+
+    PluginManager::Manager<Trade::AbstractImporter> manager;
+    Containers::Pointer<Trade::AbstractImporter> importer =
+            manager.loadAndInstantiate("StbImageImporter");
+    if (!importer) {
+        Error{} << "load importer failed";
+        exit(-1);
+    }
+//    importer->openFile(RES_DIR "/height_short_mat_5.png");
+    importer->openFile(RES_DIR "/avator.jpg");
+//    Debug{} << importer->image2D(0)->format();
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+
+//    GL::BufferImage<2> image(PixelFormat::R16Unorm, GL::PixelType::UnsignedShort, )
+//mTexture.setImage()
+    mTexture.setWrapping(GL::SamplerWrapping::ClampToEdge)
+            .setMagnificationFilter(GL::SamplerFilter::Linear)
+            .setMinificationFilter(GL::SamplerFilter::Linear)
+            .setStorage(1, GL::textureFormat(image->format()), image->size())
+            .setSubImage(0, {}, *image);
+    mShader.bindTexture(mTexture);
 }
 
 void CustomTessellation::drawEvent()
