@@ -58,25 +58,29 @@ public:
 
 MeshShader::MeshShader()
 {
-    GL::Shader vert{GL::Version::GL410, GL::Shader::Type::Vertex};
-    GL::Shader tess{GL::Version::GL410, GL::Shader::Type::TessellationControl};
-    GL::Shader eval{GL::Version::GL410, GL::Shader::Type::TessellationEvaluation};
-    GL::Shader frag{GL::Version::GL410, GL::Shader::Type::Fragment};
+    GL::Shader vs{GL::Version::GL410, GL::Shader::Type::Vertex};
+    GL::Shader cs{GL::Version::GL410, GL::Shader::Type::TessellationControl};
+    GL::Shader es{GL::Version::GL410, GL::Shader::Type::TessellationEvaluation};
+    GL::Shader gs{GL::Version::GL410, GL::Shader::Type::Geometry};
+    GL::Shader fs{GL::Version::GL410, GL::Shader::Type::Fragment};
 
-    vert.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vert");
-    tess.addFile(ROOT_PATH "/magnum/m7_displacement/shader.tess");
-    eval.addFile(ROOT_PATH "/magnum/m7_displacement/shader.glsl");
-    frag.addFile(ROOT_PATH "/magnum/m7_displacement/shader.frag");
+    vs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vs.glsl");
+    cs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.cs.glsl");
+    es.addFile(ROOT_PATH "/magnum/m7_displacement/shader.es.glsl");
+    gs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.gs.glsl");
+    fs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.fs.glsl");
 
-    vert.compile();
-    tess.compile();
-    eval.compile();
-    frag.compile();
+    vs.compile();
+    cs.compile();
+    es.compile();
+    gs.compile();
+    fs.compile();
 
-    attachShader(vert);
-    attachShader(tess);
-    attachShader(eval);
-    attachShader(frag);
+    attachShader(vs);
+    attachShader(cs);
+    attachShader(es);
+    attachShader(gs);
+    attachShader(fs);
 
     CORRADE_INTERNAL_ASSERT_OUTPUT(link());
 

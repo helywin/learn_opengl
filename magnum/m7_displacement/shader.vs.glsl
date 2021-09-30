@@ -1,6 +1,7 @@
 layout (location = 0) in vec3 aPos;
 out vec4 textureColor;
 out vec2 textureCoord;
+out vec2 fragPos;
 
 uniform mat4 transform;
 uniform mat4 model;
