@@ -1,8 +1,6 @@
-#extension GL_ARB_explicit_uniform_location : enable
-#extension GL_ARB_tessellation_shader : enable
-out vec4 FragColor;
+out vec4 color;
 
-void main()
+void main(void)
 {
-    FragColor = vec4(1, 0, 0, 0);
+    color = vec4(0.0, 0.8, 1.0, 1.0);
 }

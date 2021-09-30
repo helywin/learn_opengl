@@ -1,23 +1,15 @@
-#extension GL_ARB_tessellation_shader : enable
-layout(vertices = 3) out;
+layout (vertices = 4) out;
 
-in vec2 cs_pos_in[];
-//in vec2 cs_texCoord_in[];
-//in vec3 cs_normal_in[];
-
-out vec2 es_pos_in[];
-//out vec2 es_texCoord_in[];
-//out vec3 es_normal_in[];
-
-void main()
+void main(void)
 {
-    gl_TessLevelOuter[0] = 3.0;
-    gl_TessLevelOuter[1] = 3.0;
-    gl_TessLevelOuter[2] = 3.0;
-
-    gl_TessLevelInner[0] = gl_TessLevelOuter[2];
-
-    es_pos_in[gl_InvocationID] = cs_pos_in[gl_InvocationID];
-    //    es_texCoord_in[gl_InvocationID] = cs_texCoord_in[gl_InvocationID];
-    //    es_normal_in[gl_InvocationID] = cs_normal_in[gl_InvocationID];
+    if (gl_InvocationID == 0)
+    {
+        gl_TessLevelInner[0] = 5.0;
+        gl_TessLevelInner[1] = 5.0;
+        gl_TessLevelOuter[0] = 5.0;
+        gl_TessLevelOuter[1] = 5.0;
+        gl_TessLevelOuter[2] = 5.0;
+        gl_TessLevelOuter[3] = 5.0;
+    }
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }

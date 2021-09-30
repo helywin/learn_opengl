@@ -1,25 +1,20 @@
-#extension GL_ARB_explicit_uniform_location : enable
-#extension GL_ARB_tessellation_shader : enable
-layout(triangles, equal_spacing, ccw) in;
+layout (quads, equal_spacing, cw) in;
 
-in vec2 es_pos_in[];
-
-//out vec2 fs_pos_in;
-
-vec2 interpolate2D(vec2 v0, vec2 v1, vec2 v2)
+void main(void)
 {
-    return vec2(gl_TessCoord.x) * v0 + vec2(gl_TessCoord.y) * v1 + vec2(gl_TessCoord.z) * v2;
-}
+    float u = gl_TessCoord.x;
+    float omu = 1 - u;    // omu为1减去"u"
+    float v = gl_TessCoord.y;
+    float omv = 1 - v;    // omv为1减去"v"
 
-vec3 interpolate3D(vec3 v0, vec3 v1, vec3 v2)
-{
-//    return vec3(gl_TessCoord.x) * v0 + vec3(gl_TessCoord.y) * v1 + vec3(gl_TessCoord.z) * v2;
-    return (v0 + v1 + v2) / 3;
-}
+//    color = gl_TessCoord; // color最后给到片段着色器时，值为(gl_TessCoord.x, gl_TessCoord.y, 0.0, 1.0)
 
-void main()
-{
-
-    vec2 pos = interpolate2D(es_pos_in[0], es_pos_in[1], es_pos_in[2]);
-    gl_Position = vec4(pos, 0.0, 1.0);
+    gl_Position = omu * omv * gl_in[0].gl_Position +
+    u * omv * gl_in[1].gl_Position +
+    u * v * gl_in[2].gl_Position +
+    omu * v * gl_in[3].gl_Position;
+//    gl_Position =
+//    (gl_TessCoord.x * gl_in[0].gl_Position) +
+//    (gl_TessCoord.y * gl_in[1].gl_Position) +
+//    (gl_TessCoord.z * gl_in[2].gl_Position);
 }

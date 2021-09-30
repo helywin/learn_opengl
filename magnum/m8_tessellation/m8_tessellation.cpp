@@ -31,7 +31,7 @@ using namespace Magnum;
 class MeshShader : public GL::AbstractShaderProgram
 {
 public:
-    typedef GL::Attribute<0, Vector2> Position;
+    typedef GL::Attribute<0, Vector4> Position;
     typedef GL::Attribute<1, Vector3> Color;
 
     explicit MeshShader();
@@ -100,7 +100,8 @@ private:
 };
 
 CustomTessellation::CustomTessellation(const Arguments &arguments) :
-        Platform::Application{arguments, Configuration{}.setTitle("Shader")}
+        Platform::Application{arguments, Configuration{}.setTitle("tessellation")
+                .setSize({800, 800})}
 {
 //    Platform::Sdl2Application::GLConfiguration::setFlags()
     using namespace Math::Literals;
@@ -111,21 +112,22 @@ CustomTessellation::CustomTessellation(const Arguments &arguments) :
         Color3 color;
     };
 
-    const TriangleVertex data[] = {
-            {{-0.5f, -0.5f}, 0xff0000_rgbf},    /* Left vertex, red color */
-            {{0.5f,  -0.5f}, 0x00ff00_rgbf},    /* Right vertex, green color */
-            {{0.0f,  0.5f},  0x0000ff_rgbf}     /* Top vertex, blue color */
+    float vertices[] = {
+            0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 0.0f, 1.0f,
+            0.0f, 1.0f, 0.0f, 1.0f,
     };
 
     GL::Buffer buffer;
-    buffer.setData(data);
+    buffer.setData(vertices);
 
-    mMesh.setCount(3);
+    mMesh.setCount(4);
     mMesh.setPrimitive(GL::MeshPrimitive::Patches);
     mMesh.addVertexBuffer(std::move(buffer), 0,
-                          MeshShader::Position{},
-                          MeshShader::Color{});
+                          MeshShader::Position{});
     GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
+    GL::Renderer::setPatchVertexCount(4);
 }
 
 void CustomTessellation::drawEvent()
