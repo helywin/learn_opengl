@@ -63,108 +63,64 @@ void processInput(GLFWwindow *window)
 void init()
 {
     float vertices[] = {
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            0.0f, 0.5f, 0.0f
+            -0.5f, -0.5f, 0.0f, 1.0f,
+            0.5f, -0.5f, 0.0f, 1.0f,
+            0.0f, 0.5f, 0.0f, 1.0f,
     };
 
     static const char *vertexShaderSource = R"(
-#version 420 core
-#extension GL_ARB_tessellation_shader : enable
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec3 aColor;
-
-out vec2 fs_pos_in;
-
-void main()
+#version 410 core
+layout (location = 0) in vec4 aPos;
+void main(void)
 {
-    fs_pos_in = aPos;
+    //const vec4 vertices[] = vec4[](vec4( 0.25, -0.25, 0.5, 1.0),
+    //                               vec4(-0.25, -0.25, 0.5, 1.0),
+    //                               vec4( 0.25,  0.25, 0.5, 1.0));
+
+    gl_Position = aPos;
 }
 )";
 
     static const char *tessellationControlSource = R"(
-#version 420 core
-#extension GL_ARB_tessellation_shader : enable
-layout(vertices = 3) out;
+#version 410 core
 
-in vec2 cs_pos_in[];
-//in vec2 cs_texCoord_in[];
-//in vec3 cs_normal_in[];
+layout (vertices = 3) out;
 
-out vec2 es_pos_in[];
-//out vec2 es_texCoord_in[];
-//out vec3 es_normal_in[];
-
-void main()
+void main(void)
 {
-    gl_TessLevelOuter[0] = 3.0;
-    gl_TessLevelOuter[1] = 3.0;
-    gl_TessLevelOuter[2] = 3.0;
-
-    gl_TessLevelInner[0] = gl_TessLevelOuter[2];
-
-    es_pos_in[gl_InvocationID] = cs_pos_in[gl_InvocationID];
-    //    es_texCoord_in[gl_InvocationID] = cs_texCoord_in[gl_InvocationID];
-    //    es_normal_in[gl_InvocationID] = cs_normal_in[gl_InvocationID];
+    if (gl_InvocationID == 0)
+    {
+        gl_TessLevelInner[0] = 5.0;
+        gl_TessLevelInner[1] = 5.0;
+        gl_TessLevelOuter[0] = 5.0;
+        gl_TessLevelOuter[1] = 5.0;
+        gl_TessLevelOuter[2] = 5.0;
+        gl_TessLevelOuter[3] = 5.0;
+    }
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }
 )";
     static const char *tessellationEvalSource = R"(
-#version 420 core
-#extension GL_ARB_tessellation_shader : enable
-layout(triangles, equal_spacing, ccw) in;
+#version 410 core
 
-in vec2 es_pos_in[];
+layout (triangles, equal_spacing, cw) in;
 
-out vec2 gs_pos_in;
-
-vec2 interpolate2D(vec2 v0, vec2 v1, vec2 v2)
+void main(void)
 {
-    return vec2(gl_TessCoord.x) * v0 + vec2(gl_TessCoord.y) * v1 + vec2(gl_TessCoord.z) * v2;
-}
-
-vec3 interpolate3D(vec3 v0, vec3 v1, vec3 v2)
-{
-//    return vec3(gl_TessCoord.x) * v0 + vec3(gl_TessCoord.y) * v1 + vec3(gl_TessCoord.z) * v2;
-    return (v0 + v1 + v2) / 3;
-}
-
-void main()
-{
-
-    vec2 pos = interpolate2D(es_pos_in[0], es_pos_in[1], es_pos_in[2]);
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-)";
-
-    static const char *geometrySource = R"(
-#version 420 core
-#extension GL_ARB_tessellation_shader : enable
-layout(triangles) in;
-layout (triangle_strip, max_vertices = 16)out;
-in vec2 gs_pos_in[];
-
-void main()
-{
-    gl_Position = vec4(gl_in[0].gl_Position.xy, 0, 1);
-    EmitVertex();
-
-    gl_Position = vec4(gl_in[1].gl_Position.xy, 0, 1);
-    EmitVertex();
-
-    gl_Position = vec4(gl_in[2].gl_Position.xy, 0, 1);
-    EmitVertex();
+    gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position) +
+                  (gl_TessCoord.y * gl_in[1].gl_Position) +
+                  (gl_TessCoord.z * gl_in[2].gl_Position);
 }
 )";
 
     static const char *fragmentShaderSource = R"(
-#version 420 core
-#extension GL_ARB_explicit_uniform_location : enable
-#extension GL_ARB_tessellation_shader : enable
-out vec4 FragColor;
+#version 410 core
 
-void main()
+out vec4 color;
+
+void main(void)
 {
-    FragColor = vec4(1, 0, 0, 0);
+    color = vec4(0.0, 0.8, 1.0, 1.0);
 }
 )";
 
@@ -194,10 +150,10 @@ void main()
     glCompileShader(tessellationEvalShader);
     getError(tessellationEvalShader);
 
-    GLint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
-    glShaderSource(geometryShader, 1, &geometrySource, nullptr);
-    glCompileShader(geometryShader);
-    getError(geometryShader);
+//    GLint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+//    glShaderSource(geometryShader, 1, &geometrySource, nullptr);
+//    glCompileShader(geometryShader);
+//    getError(geometryShader);
 
     GLint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
@@ -208,14 +164,14 @@ void main()
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, tessellationControlShader);
     glAttachShader(shaderProgram, tessellationEvalShader);
-    glAttachShader(shaderProgram, geometryShader);
+//    glAttachShader(shaderProgram, geometryShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
     glDeleteShader(vertexShader);
     glDeleteShader(tessellationControlShader);
     glDeleteShader(tessellationEvalShader);
-    glDeleteShader(geometryShader);
+//    glDeleteShader(geometryShader);
     glDeleteShader(fragmentShader);
 
     glGenBuffers(1, &VBO);
@@ -224,7 +180,7 @@ void main()
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
     glPatchParameteri(GL_TRIANGLES, 3);
 }
