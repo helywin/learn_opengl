@@ -75,11 +75,11 @@ MeshShader::MeshShader()
 //    GL::Shader gs{GL::Version::GL420, GL::Shader::Type::Geometry};
     GL::Shader fs{GL::Version::GL420, GL::Shader::Type::Fragment};
 
-    vs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.vs.glsl");
-    cs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.cs.glsl");
-    es.addFile(ROOT_PATH "/magnum/m7_displacement/shader.es.glsl");
-//    gs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.gs.glsl");
-    fs.addFile(ROOT_PATH "/magnum/m7_displacement/shader.fs.glsl");
+    vs.addFile(ROOT_PATH "/magnum/m7_displacement/vs.glsl");
+    cs.addFile(ROOT_PATH "/magnum/m7_displacement/cs.glsl");
+    es.addFile(ROOT_PATH "/magnum/m7_displacement/es.glsl");
+//    gs.addFile(ROOT_PATH "/magnum/m7_displacement/gs.glsl");
+    fs.addFile(ROOT_PATH "/magnum/m7_displacement/fs.glsl");
 
     ;
     CORRADE_INTERNAL_ASSERT_OUTPUT(GL::Shader::compile(
@@ -206,7 +206,8 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
     mManipulator.setParent(&mScene);
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
-    GL::Renderer::setPatchVertexCount(3);
+    GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
+    GL::Renderer::setPatchVertexCount(4);
 //    GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
 //    GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
     PluginManager::Manager<Trade::AbstractImporter> manager;
@@ -217,7 +218,7 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
         exit(-1);
     }
 //    importer->openFile(RES_DIR "/height_short_mat_5.png");
-    importer->openFile(RES_DIR "/displacement.png");
+    importer->openFile(RES_DIR "/height_map.png");
     Debug{} << importer->image2D(0)->format();
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -245,8 +246,7 @@ void CustomMesh::drawEvent()
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
     using namespace Math::Literals;
-    mShader.draw(mMeshGrid->mMesh);
-    Debug{} << "error:" << Magnum::GL::Renderer::error();
+    mCamera->draw(mDrawables);
     swapBuffers();
 }
 
