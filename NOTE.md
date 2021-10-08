@@ -1592,3 +1592,90 @@ void main()
 
 ![skybox](https://learnopengl-cn.github.io/img/04/06/cubemaps_skybox.png)
 
+# 文本渲染
+
+## 经典文本渲染：位图字体
+
+使用位图
+
+## 现代文本渲染：FreeType
+
+使用FreeType
+
+FreeType是一个能够用于加载字体并将他们渲染到位图以及提供多种字体相关的操作的软件开发库。
+
+```c++
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+struct Character
+{
+    GLuint textureID;       // 纹理
+    glm::ivec2 size;        // 大小
+    glm::ivec2 bearing;     // 从基准线到字形左部/顶部的偏移值
+    GLuint advance;         // 字形之间原点距离
+};
+
+void init()
+{
+    // 初始化
+    FT_Library ft;
+    if (FT_Init_FreeType(&ft)) {
+        std::cout << "ERROR::FREETYPE: 不能初始化FreeType库" << std::endl;
+        exit(-1);
+    }
+
+    // 加载字体
+    FT_Face face;
+    if (FT_New_Face(ft, RES_DIR "/SourceSansPro-Regular.ttf", 0, &face)) {
+        std::cout << "ERROR::FREETYPE: 不能加载字体" << std::endl;
+        exit(-1);
+    }
+
+    // 设置大小，宽度为0表示根据高度自动设置
+    FT_Set_Pixel_Sizes(face, 0, 48);
+
+    // 加载字形
+    if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
+        std::cout << "ERROR::FREETYPE: 不能加载Glyph" << std::endl;
+        exit(-1);
+    }
+    
+    // 创建纹理
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RED,
+                 face->glyph->bitmap.width,
+                 face->glyph->bitmap.rows,
+                 0,
+                 GL_RED,
+                 GL_UNSIGNED_BYTE,
+                 face->glyph->bitmap.buffer);
+    // 设置纹理选项
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    characters[c] = {
+            texture,
+            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+            (GLuint) face->glyph->advance.x
+    };
+}
+
+```
+
+![字形图](https://learnopengl-cn.github.io/img/06/02/glyph.png)
+
+| 属性         | 获取方式                    | 生成位图描述                                                 |
+| ------------ | --------------------------- | ------------------------------------------------------------ |
+| **width**    | `face->glyph->bitmap.width` | 位图宽度（像素）                                             |
+| **height**   | `face->glyph->bitmap.rows`  | 位图高度（像素）                                             |
+| **bearingX** | `face->glyph->bitmap_left`  | 水平距离，即位图相对于原点的水平位置（像素）                 |
+| **bearingY** | `face->glyph->bitmap_top`   | 垂直距离，即位图相对于基准线的垂直位置（像素）               |
+| **advance**  | `face->glyph->advance.x`    | 水平预留值，即原点到下一个字形原点的水平距离（单位：1/64像素） |
+

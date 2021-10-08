@@ -70,7 +70,7 @@ else ()
     set(OPENGL OpenGL)
 endif ()
 
-add_compile_definitions(PATH_SEP="/" ROOT_PATH=".." RES_DIR="${CMAKE_SOURCE_DIR}/res")
+add_compile_definitions(PATH_SEP="/" ROOT_PATH=".." RES_DIR="../res")
 
 set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 set(WITH_ANYSCENEIMPORTER ON CACHE BOOL "" FORCE)
