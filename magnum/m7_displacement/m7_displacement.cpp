@@ -196,6 +196,7 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
         }
 {
     glfwSetInputMode(window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     using namespace Math::Literals;
     mCameraObject.setParent(&mScene)
             .translate(Vector3::zAxis(2.0f));
@@ -206,6 +207,7 @@ CustomMesh::CustomMesh(const Arguments &arguments) :
     mManipulator.setParent(&mScene);
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
+    GL::Renderer::enable(GL::Renderer::Feature::Multisampling);
     GL::Renderer::setPolygonMode(GL::Renderer::PolygonMode::Line);
     GL::Renderer::setPatchVertexCount(4);
 //    GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
@@ -256,7 +258,7 @@ void CustomMesh::viewportEvent(ViewportEvent &event)
     mCamera->setViewport(event.windowSize());
 }
 
-float CAMERA_SPEED = 0.1f;
+float CAMERA_SPEED = 0.02f;
 
 void CustomMesh::forward()
 {
