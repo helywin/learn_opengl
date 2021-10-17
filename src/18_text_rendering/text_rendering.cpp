@@ -26,7 +26,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void init();
 void initFont();
-void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scale,
+void renderText(const std::wstring &text, GLfloat x, GLfloat y, GLfloat scale,
                 const glm::vec3 &color);
 
 // settings
@@ -36,8 +36,11 @@ GLuint VAO;
 GLuint VBO;
 GLuint EBO;
 GLint shaderProgram;
-std::map<GLchar, Character> characters;
+std::map<char, Character> characters;
+std::map<wchar_t, Character> wide_characters;
 std::shared_ptr<Shader> fontShader;
+
+wchar_t chinese[] = L"我爱中国";
 
 int main()
 {
@@ -63,7 +66,7 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        renderText("Hello World!", 25, 25, 1.0f, {1, 0, 0});
+        renderText(L"我爱中国", 25, 25, 1.0f, {1, 0, 0});
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -94,7 +97,8 @@ void initFont()
     }
 
     FT_Face face;
-    if (FT_New_Face(ft, RES_DIR "/SourceSansPro-Regular.ttf", 0, &face)) {
+//    if (FT_New_Face(ft, RES_DIR "/SourceSansPro-Regular.ttf", 0, &face)) {
+    if (FT_New_Face(ft, RES_DIR "/NotoSansMonoCJKsc-Regular.otf", 0, &face)) {
         std::cout << "ERROR::FREETYPE: 不能加载字体" << std::endl;
         exit(-1);
     }
@@ -107,11 +111,11 @@ void initFont()
     }
 
     // opengl 一字节对齐
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (GLchar c = 0; c <= 126; ++c) {
+
+    auto loadChar = [&face](char c) {
         if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
             std::cout << "ERROR::FREETYPE: 不能加载Glyph: " << (int) c << std::endl;
-            continue;
+            return;
         }
         GLuint texture;
         glGenTextures(1, &texture);
@@ -136,6 +140,45 @@ void initFont()
                 glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
                 (GLuint) face->glyph->advance.x
         };
+    };
+
+    auto loadWideChar = [&face](FT_ULong c) {
+        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+            std::cout << "ERROR::FREETYPE: 不能加载Glyph: " << (int) c << std::endl;
+            return;
+        }
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RED,
+                     face->glyph->bitmap.width,
+                     face->glyph->bitmap.rows,
+                     0,
+                     GL_RED,
+                     GL_UNSIGNED_BYTE,
+                     face->glyph->bitmap.buffer);
+        // 设置纹理选项
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        wide_characters[c] = {
+                texture,
+                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+                (GLuint) face->glyph->advance.x
+        };
+    };
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    for (GLchar c = 0; c <= 126; ++c) {
+        loadChar(c);
+    }
+
+    for (auto c: chinese) {
+        loadWideChar(c);
     }
 
     FT_Done_Face(face);
@@ -166,7 +209,7 @@ void init()
     glBindVertexArray(0);
 }
 
-void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scale,
+void renderText(const std::wstring &text, GLfloat x, GLfloat y, GLfloat scale,
                 const glm::vec3 &color)
 {
     fontShader->use();
@@ -175,7 +218,7 @@ void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scale,
     glBindVertexArray(VAO);
 
     for (auto c: text) {
-        const auto &ch = characters[c];
+        const auto &ch = wide_characters[c];
         GLfloat xpos = x + ch.bearing.x * scale;
         GLfloat ypos = y - (ch.size.y - ch.bearing.y) * scale;
 

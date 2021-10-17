@@ -1592,6 +1592,214 @@ void main()
 
 ![skybox](https://learnopengl-cn.github.io/img/04/06/cubemaps_skybox.png)
 
+# 高级数据
+
+使用`glBufferSubData`填充缓冲区的特定区域
+
+```cpp
+// 使用该函数之前必须调用glBufferData分配好内存
+glBufferSubData(GL_ARRAY_BUFFER, 24, sizeof(data), &data); // 范围： [24, 24 + sizeof(data)]
+```
+
+除了传入数据指针外，也可以用`glMapBuffer`返回缓冲区内存指针来自行分配
+
+```cpp
+float data[] = {
+  0.5f, 1.0f, -0.35f
+  ...
+};
+glBindBuffer(GL_ARRAY_BUFFER, buffer);
+// 获取指针
+void *ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+// 复制数据到内存
+memcpy(ptr, data, sizeof(data));
+// 记得告诉OpenGL我们不再需要这个指针了
+glUnmapBuffer(GL_ARRAY_BUFFER);
+```
+
+使用该方法可以减少数据拷贝
+
+## 分批顶点属性
+
+使用`glBufferSubData`把顶点和法线、纹理坐标分开存储
+
+```cpp
+float positions[] = { ... };
+float normals[] = { ... };
+float tex[] = { ... };
+// 填充缓冲
+glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(positions), &positions);
+glBufferSubData(GL_ARRAY_BUFFER, sizeof(positions), sizeof(normals), &normals);
+glBufferSubData(GL_ARRAY_BUFFER, sizeof(positions) + sizeof(normals), sizeof(tex), &tex);
+
+// 映射到ebo
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);  
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(sizeof(positions)));  
+glVertexAttribPointer(
+  2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(sizeof(positions) + sizeof(normals)));
+```
+
+## 复制缓冲
+
+`glCopyBufferSubData`
+
+接下来glCopyBufferSubData会从`readtarget`中读取`size`大小的数据，并将其写入`writetarget`缓冲的`writeoffset`偏移量处。下面这个例子展示了如何复制两个顶点数组缓冲：
+
+```cpp
+float vertexData[] = { ... };
+glBindBuffer(GL_COPY_READ_BUFFER, vbo1);
+glBindBuffer(GL_COPY_WRITE_BUFFER, vbo2);
+glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(vertexData));
+```
+
+我们也可以只将`writetarget`缓冲绑定为新的缓冲目标类型之一：
+
+```cpp
+float vertexData[] = { ... };
+glBindBuffer(GL_ARRAY_BUFFER, vbo1);
+glBindBuffer(GL_COPY_WRITE_BUFFER, vbo2);
+glCopyBufferSubData(GL_ARRAY_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(vertexData));
+```
+
+Uniform缓冲
+
+# 高级GLSL
+
+## GLSL的内建变量
+
+所有的内建变量：[wiki](https://www.khronos.org/opengl/wiki/Built-in_Variable_(GLSL))
+
+### 顶点着色器变量
+
+`gl_Position`输出
+
+`gl_PointSize`输出，用来设置点的宽高，启用方式
+
+```cpp
+glEnable(GL_PROGRAM_POINT_SIZE);
+```
+
+```glsl
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);    
+    gl_PointSize = gl_Position.z;    
+}
+```
+
+点由远及近改变大小
+
+`gl_VertexID`输入，表示当前绘制点的索引
+
+### 片段着色器变量
+
+`gl_FragCoord`输入，x和y代表片段窗口空间的坐标，比如用`glViewport`设置为800x600窗口，则x在0-800，y在0-600，可以根据窗口位置来分别渲染，z代表深度值
+
+`gl_FrontFacing`输入，告诉我们当前面是正面还是反面，比如在内部外部设置不同的纹理，但是开启面剔除内部就不会渲染了
+
+`gl_FragDepth`输出，可以修改当前像素的深度值，默认等于`gl_FragCoord.z`
+
+根据条件启用该输出变量：
+
+```glsl
+layout (depth_<condition>) out float gl_FragDepth;
+
+#version 420 core // 注意GLSL的版本！
+out vec4 FragColor;
+layout (depth_greater) out float gl_FragDepth;
+
+void main()
+{             
+    FragColor = vec4(1.0);
+    gl_FragDepth = gl_FragCoord.z + 0.1;
+}  
+```
+
+| 条件        | 描述                                                         |
+| ----------- | ------------------------------------------------------------ |
+| `any`       | 默认值。提前深度测试是禁用的，你会损失很多性能               |
+| `greater`   | 你只能让深度值比`gl_FragCoord.z`更大                         |
+| `less`      | 你只能让深度值比`gl_FragCoord.z`更小                         |
+| `unchanged` | 如果你要写入`gl_FragDepth`，你将只能写入`gl_FragCoord.z`的值 |
+
+## 接口块
+
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+out VS_OUT
+{
+    vec2 TexCoords;
+} vs_out;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);    
+    vs_out.TexCoords = aTexCoords;
+}  
+```
+
+使用`in`和`out`定义，在下一个着色器中定义输入
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+
+in VS_OUT
+{
+    vec2 TexCoords;
+} fs_in;
+
+uniform sampler2D texture;
+
+void main()
+{             
+    FragColor = texture(texture, fs_in.TexCoords);   
+}
+```
+
+## Uniform缓冲对象
+
+它允许我们定义一系列在多个着色器中相同的**全局**Uniform变量，不用每个都写
+
+例如：
+
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+layout (std140) uniform Matrices
+{
+    mat4 projection;
+    mat4 view;
+};
+
+uniform mat4 model;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+```
+
+### Uniform块布局
+
+[std140布局的规则](http://www.opengl.org/registry/specs/ARB/uniform_buffer_object.txt)
+
+| 类型                | 布局规则                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| 标量，比如int和bool | 每个标量的基准对齐量为N。                                    |
+| 向量                | 2N或者4N。这意味着vec3的基准对齐量为4N。                     |
+| 标量或向量的数组    | 每个元素的基准对齐量与vec4的相同。                           |
+| 矩阵                | 储存为列向量的数组，每个向量的基准对齐量与vec4的相同。       |
+| 结构体              | 等于所有元素根据规则计算后的大小，但会填充到vec4大小的倍数。 |
+
 # 文本渲染
 
 ## 经典文本渲染：位图字体
