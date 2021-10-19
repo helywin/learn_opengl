@@ -78,7 +78,7 @@ set(WITH_OBJIMPORTER ON CACHE BOOL "" FORCE)
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
-find_package(freetype CONFIG REQUIRED)
+#find_package(freetype CONFIG REQUIRED)
 set(Magnum_GLFW_FOUND TRUE)
 find_package(Magnum REQUIRED
         GL
@@ -95,8 +95,6 @@ find_package(Magnum REQUIRED
         )
 
 find_package(Corrade CONFIG REQUIRED Main)
-
-find_package(box2d CONFIG REQUIRED)
 
 if (UNIX)
     set(ASSIMP assimp)

@@ -50,3 +50,5 @@ cmake-build-release
 .idea
 debug/
 release/
+.vscode/
+.vim/
