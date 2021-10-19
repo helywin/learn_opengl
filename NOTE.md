@@ -1800,6 +1800,28 @@ void main()
 | 矩阵                | 储存为列向量的数组，每个向量的基准对齐量与vec4的相同。       |
 | 结构体              | 等于所有元素根据规则计算后的大小，但会填充到vec4大小的倍数。 |
 
+# 几何着色器
+
+顶点着色器和片段着色器直接，准确的说是细分估计后面，有一个可选的几何着色器(Geometry Shader)，输入一个图元，输出一组顶点，几何着色器可以变换顶点，也可以添加更多的顶点
+
+```glsl
+#version 330 core
+layout (points) in;
+layout (line_strip, max_vertices = 2) out;
+
+void main() {    
+    gl_Position = gl_in[0].gl_Position + vec4(-0.1, 0.0, 0.0, 0.0); 
+    EmitVertex();
+
+    gl_Position = gl_in[0].gl_Position + vec4( 0.1, 0.0, 0.0, 0.0);
+    EmitVertex();
+
+    EndPrimitive();
+}
+```
+
+
+
 # 文本渲染
 
 ## 经典文本渲染：位图字体
