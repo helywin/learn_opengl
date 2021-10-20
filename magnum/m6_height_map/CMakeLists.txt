@@ -6,6 +6,5 @@ target_link_libraries(m6_height_map
         Magnum::Magnum
         Magnum::Shaders
         Magnum::SceneGraph
-        glfw
         Magnum::Trade
         )

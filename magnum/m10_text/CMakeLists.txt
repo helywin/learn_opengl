@@ -6,6 +6,5 @@ target_link_libraries(m10_text
         Magnum::Magnum
         Magnum::Text
         Magnum::Shaders
-        glfw
         Magnum::Trade
         freetype)

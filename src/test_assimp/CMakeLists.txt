@@ -3,6 +3,6 @@ add_executable(test_assimp
         )
 
 target_link_libraries(test_assimp
-        assimp::assimp
+        ${ASSIMP}
         com
         )

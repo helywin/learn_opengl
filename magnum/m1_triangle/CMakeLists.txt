@@ -4,4 +4,5 @@ target_link_libraries(m1_triangle
         Magnum::Sdl2Application
         Magnum::GL
         Magnum::Magnum
-        Magnum::Shaders)
+        Magnum::Shaders
+        )

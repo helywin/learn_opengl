@@ -62,11 +62,11 @@ gun model: [Free3D](https://free3d.com/3d-model/45-acp-smith-and-wesson-13999.ht
 
 # 注意事项
 
-1. 使用vcpkg安装的magnum在使用GlfwApplication时CMake会出现问题，需要注释掉`%VCPKG_ROOT%\installed\x64-windows\share\cmake\Magnum\FindMagnum.cmake`第650行的
+1. 使用vcpkg安装的magnum在使用GlfwApplication时CMake会出现问题，需要更改第650行附近的代码
 
 ```cmake
-# 防止找不到GLFW，需要手动链接GLFW
-#find_package(GLFW)
-#set_property(TARGET Magnum::${_component} APPEND PROPERTY
-#    INTERFACE_LINK_LIBRARIES GLFW::GLFW)
+# FindMagnum.cmake
+find_package(glfw3)
+set_property(TARGET Magnum::${_component} APPEND PROPERTY
+    INTERFACE_LINK_LIBRARIES glfw)
 ```

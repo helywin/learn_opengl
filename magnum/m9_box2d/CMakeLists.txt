@@ -5,7 +5,5 @@ target_link_libraries(m9_box2d
         Magnum::GL
         Magnum::Magnum
         Magnum::Shaders
-        glfw
         Magnum::Trade
-        box2d::box2d
         )

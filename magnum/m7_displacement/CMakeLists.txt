@@ -6,6 +6,5 @@ target_link_libraries(m7_displacement
         Magnum::Magnum
         Magnum::Shaders
         Magnum::SceneGraph
-        glfw
         Magnum::Trade
         )

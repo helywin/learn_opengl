@@ -8,5 +8,4 @@ target_link_libraries(m5_camera
         Magnum::Shaders
         Magnum::Trade
         Magnum::GlfwApplication
-        glfw
         )

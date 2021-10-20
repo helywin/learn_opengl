@@ -219,7 +219,7 @@ CustomCamera::CustomCamera(const Arguments &arguments) :
             continue;
         }
 
-        mMaterials[i] = std::move(dynamic_cast<Trade::PhongMaterialData &>(*materialData));
+        mMaterials[i] = std::move(static_cast<Trade::PhongMaterialData &>(*materialData));
     }
 
     // 加载网格

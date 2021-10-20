@@ -96,6 +96,8 @@ find_package(Magnum REQUIRED
 
 find_package(Corrade CONFIG REQUIRED Main)
 
+include_directories(${SDL2_INCLUDE_DIRS})
+
 if (UNIX)
     set(ASSIMP assimp)
 else ()

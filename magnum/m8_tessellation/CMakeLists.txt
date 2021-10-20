@@ -5,5 +5,4 @@ target_link_libraries(m8_tessellation
         Magnum::GL
         Magnum::Magnum
         Magnum::Shaders
-        glfw
         Magnum::Trade)
