@@ -62,11 +62,21 @@ gun model: [Free3D](https://free3d.com/3d-model/45-acp-smith-and-wesson-13999.ht
 
 # 注意事项
 
-1. 使用vcpkg安装的magnum在使用GlfwApplication时CMake会出现问题，需要更改第650行附近的代码
+1. 使用vcpkg安装的magnum和ubuntu下面编译安装的，在使用GlfwApplication时CMake会出现问题，需要更改第650行附近的代码
 
 ```cmake
 # FindMagnum.cmake
 find_package(glfw3)
 set_property(TARGET Magnum::${_component} APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES glfw)
+```
+
+2. ubuntu下面还有改相同文件的SDL2配置
+
+`sudo vim /usr/share/cmake/Magnum/FindMagnum.cmake`第647行后用`${SDL2_LIBRARIES}`而非`SDL2::SDL2`
+
+```cmake
+find_package(SDL2)
+set_property(TARGET Magnum::${_component} APPEND PROPERTY
+    INTERFACE_LINK_LIBRARIES ${SDL2_LIBRARIES})
 ```

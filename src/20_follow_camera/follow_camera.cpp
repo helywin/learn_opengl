@@ -1,6 +1,7 @@
 //
-// Created by jiang on 2021/9/24.
+// Created by helywin on 2021/9/1.
 //
+
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -26,8 +27,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Shader.hpp"
-#include "Texture2D.hpp"
-#include "Model.hpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -49,64 +48,63 @@ GLuint VAO;
 GLuint lightVAO;
 GLuint VBO;
 GLuint EBO;
+
+GLuint triangleVAO;
+GLuint triangleVBO;
+
 std::shared_ptr<Shader> shader;
-std::shared_ptr<Shader> frameShader;
 std::shared_ptr<Shader> lightShader;
-std::shared_ptr<Shader> terrainShader;
-std::shared_ptr<Model> modelCurve;
-std::shared_ptr<Model> modelCube;
+std::shared_ptr<Shader> followShader;
 GLuint texture1;
 GLuint texture2;
-GLuint texture3;
 float transparent = 0.2f;
 
 // 位置, 纹理
 float vertices[] = {
-        // positions          // normals           // texture coords
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
 
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f
 };
 
-glm::vec3 cubePositions[10] = {
+glm::vec3 cubePositions[] = {
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(2.0f, 5.0f, -15.0f),
         glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -119,12 +117,6 @@ glm::vec3 cubePositions[10] = {
         glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
-glm::vec3 pointLightPositions[] = {
-        glm::vec3(0.7f, 0.2f, 2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f, 2.0f, -12.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f)
-};
 
 // 位置向量
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -136,8 +128,8 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float angle = 0;
 
 ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
-ImVec4 terrainColor(0.4f, 0.4f, 0.4f, 1.0f);
-ImVec4 cubeColor(0.8f, 0.8f, 0.8f, 1.0f);
+ImVec4 terrainColor(1.0f, 0.5f, 0.31f, 1.0f);
+ImVec4 cubeColor(1.0f, 1.0f, 1.0f, 1.0f);
 float ambientStrength = 0.1f;
 float specularStrength = 0.5f;
 int shininess = 5;
@@ -220,8 +212,8 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on M
         {
             ImGui::Begin("Settings");
             ImGui::ColorEdit3("clear color", (float *) &clearColor);
-            ImGui::ColorEdit3("cube color", (float *) &cubeColor);
-            ImGui::ColorEdit3("terrain color", (float *) &terrainColor);
+            ImGui::ColorEdit3("light color", (float *) &cubeColor);
+            ImGui::ColorEdit3("object color", (float *) &terrainColor);
 //            ImGui::SliderFloat("ambient", &ambientStrength, 0.0f, 1.0f);
 //            ImGui::SliderFloat("specular", &specularStrength, 0.0f, 1.0f);
             ImGui::SliderInt((std::string("shininess: 2^") + std::to_string(shininess)).c_str(),
@@ -256,22 +248,20 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void init()
 {
     shader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "material.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "material.frag"
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "material.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "material.frag"
     );
 
-    frameShader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "material.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "singleColor.frag"
+    lightShader = std::make_shared<Shader>(
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "light_source.vert",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "light_source.frag"
     );
 
-    terrainShader = std::make_shared<Shader>(
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "material.vert",
-            ROOT_PATH PATH_SEP "src" PATH_SEP "20_fallow_face" PATH_SEP "terrain.frag"
+    followShader = std::make_shared<Shader>(
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "follow.vs.glsl",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "follow.gs.glsl",
+            ROOT_PATH PATH_SEP "src" PATH_SEP "20_follow_camera" PATH_SEP "follow.fs.glsl"
     );
-
-    modelCurve = std::make_shared<Model>(RES_DIR PATH_SEP "stencil/curve.obj");
-    modelCube = std::make_shared<Model>(RES_DIR PATH_SEP "stencil/curve_cube.obj");
 
     glGenBuffers(1, &VBO);
     glGenVertexArrays(1, &VAO);
@@ -281,33 +271,78 @@ void init()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void *) (3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                          (void *) (6 * sizeof(float)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
 
     glGenVertexArrays(1, &lightVAO);
     glBindVertexArray(lightVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
     //    glEnableVertexAttribArray(1);
 
-    texture1 = loadTexture(RES_DIR PATH_SEP "container2.png");
-    texture2 = loadTexture(RES_DIR PATH_SEP "container2_specular.png");
+    float trianglePos[] = {
+            0, 1, 0
+    };
 
+    glGenBuffers(1, &triangleVBO);
+    glGenVertexArrays(1, &triangleVAO);
+    glBindVertexArray(triangleVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePos), trianglePos, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+    // 加载时上下翻转图片
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(RES_DIR
+                                    PATH_SEP "container.jpg", &width, &height, &nrChannels,
+                                    0);
+    if (!data) {
+        std::cout << "load image failed!" << std::endl;
+        exit(-1);
+    }
+
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // 为当前绑定的纹理对象设置环绕、过滤方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+
+
+    data = stbi_load(RES_DIR
+                     PATH_SEP "awesomeface.png", &width, &height, &nrChannels, 0);
+    if (!data) {
+        std::cout << "load image failed!" << std::endl;
+        exit(-1);
+    }
+
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
 
     // 设置不同的texture对应的采样器id
     shader->use();
-    shader->setFloat("transparent", transparent);
-    shader->setInt("material.diffuse", 0);
-    shader->setInt("material.specular", 1);
+    glUniform1i(glGetUniformLocation(shader->ID, "texture1"), 0);
+    glUniform1i(glGetUniformLocation(shader->ID, "texture2"), 1);
+    glUniform1f(glGetUniformLocation(shader->ID, "transparent"), transparent);
 
     glm::mat4 trans = glm::mat4(1.0f);
 
@@ -327,85 +362,65 @@ void init()
     shader->setMatrix4fv("view", glm::value_ptr(view));
     shader->setMatrix4fv("projection", glm::value_ptr(projection));
 
-    frameShader->use();
-    frameShader->setMatrix4fv("transform", glm::value_ptr(trans));
-    frameShader->setMatrix4fv("model", glm::value_ptr(model));
-    frameShader->setMatrix4fv("view", glm::value_ptr(view));
-    frameShader->setMatrix4fv("projection", glm::value_ptr(projection));
+    lightShader->use();
+    lightShader->setMatrix4fv("transform", glm::value_ptr(trans));
+    lightShader->setMatrix4fv("model", glm::value_ptr(model));
+    lightShader->setMatrix4fv("view", glm::value_ptr(view));
+    lightShader->setMatrix4fv("projection", glm::value_ptr(projection));
 
-    terrainShader->use();
-    terrainShader->setMatrix4fv("transform", glm::value_ptr(trans));
-    terrainShader->setMatrix4fv("model", glm::value_ptr(model));
-    terrainShader->setMatrix4fv("view", glm::value_ptr(view));
-    terrainShader->setMatrix4fv("projection", glm::value_ptr(projection));
+    followShader->use();
+    followShader->setMatrix4fv("transform", glm::value_ptr(trans));
+    followShader->setMatrix4fv("model", glm::value_ptr(model));
+    followShader->setMatrix4fv("view", glm::value_ptr(view));
+    followShader->setMatrix4fv("projection", glm::value_ptr(projection));
 
+    glEnable(GL_DEPTH_TEST);
 }
 
 void draw()
 {
-    glEnable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
 
     glBindVertexArray(VAO);
+    shader->use();
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-    terrainShader->use();
-    terrainShader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    terrainShader->setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-    terrainShader->setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
-    terrainShader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-    terrainShader->setVec3("color", cubeColor.x, cubeColor.y, cubeColor.z);
-
+    // 将光照调暗了一些以搭配场景
+    shader->setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
+    shader->setVec3("light.ambient", cubeColor.x * 0.2, cubeColor.y * 0.2, cubeColor.z * 0.2);
+    shader->setVec3("light.diffuse", cubeColor.x * 0.5, cubeColor.y * 0.5, cubeColor.z * 0.5);
+    shader->setVec3("light.specular", cubeColor.x, cubeColor.y, cubeColor.z);
+    shader->setVec3("material.ambient", terrainColor.x, terrainColor.y, terrainColor.z);
+    shader->setVec3("material.diffuse", terrainColor.x, terrainColor.y, terrainColor.z);
+    shader->setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    shader->setFloat("material.shininess", pow(2, shininess));
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    terrainShader->setMatrix4fv("view", glm::value_ptr(view));
-    terrainShader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+    glm::mat4 model = glm::mat4(1.0f);
+    shader->setMatrix4fv("model", glm::value_ptr(model));
+    shader->setMatrix4fv("view", glm::value_ptr(view));
+    shader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-//    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-//    glStencilMask(0xFF);
+    glBindVertexArray(lightVAO);
+    lightShader->use();
+    lightShader->setVec3("lightColor", cubeColor.x, cubeColor.y, cubeColor.z);
+    model = glm::translate(model, lightPos);
+    model = glm::scale(model, glm::vec3(0.2f));
+    lightShader->setMatrix4fv("model", glm::value_ptr(model));
+    lightShader->setMatrix4fv("view", glm::value_ptr(view));
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, cubePositions[0]);
-        modelCube->draw(*shader);
-    }
-
-
-//    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-//    glStencilMask(0x00);
-////    glDisable(GL_DEPTH_TEST);
-//
-//    frameShader->use();
-//    frameShader->setMatrix4fv("view", glm::value_ptr(view));
-//    frameShader->setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
-//    {
-//        float factor = 1.01;
-//        glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::scale(model, glm::vec3(factor, factor, factor));
-//        frameShader->setMatrix4fv("model", glm::value_ptr(model));
-//        modelCube->draw(*frameShader);
-//    }
-//    glStencilMask(0xFF);
-//    glEnable(GL_DEPTH_TEST);
-////     绘制相交线条
-//    glClear(GL_STENCIL_BUFFER_BIT);
-//    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-//    glStencilMask(0xFF);
-//
-//    terrainShader->use();
-//    terrainShader->setVec3("color", terrainColor.x, terrainColor.y, terrainColor.z);
-//    modelCurve->draw(*terrainShader);
-//
-//    glStencilFunc(GL_EQUAL, 1, 0xFF);
-//    glStencilMask(0x00);
-//    frameShader->use();
-//    modelCube->draw(*frameShader);
-
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_STENCIL_TEST);
-
+    glBindVertexArray(triangleVAO);
+    followShader->use();
+    model = glm::mat4(1.0f);
+    followShader->setMatrix4fv("model", glm::value_ptr(model));
+    followShader->setMatrix4fv("view", glm::value_ptr(view));
+    glDrawArrays(GL_POINTS, 0, 1);
 
 }
 
@@ -430,11 +445,21 @@ void sub()
 void clockWise()
 {
     angle += 10;
+    std::cout << "angle: " << angle << std::endl;
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
+    shader->use();
+    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 void counterClockWise()
 {
     angle -= 10;
+    std::cout << "angle: " << angle << std::endl;
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
+    shader->use();
+    shader->setMatrix4fv("transform", glm::value_ptr(trans));
 }
 
 //float cameraSpeed = 0.05f;

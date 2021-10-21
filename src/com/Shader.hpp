@@ -17,11 +17,22 @@
 class Shader
 {
 public:
+    enum ShaderType
+    {
+        st_vertex = GL_VERTEX_SHADER,
+        st_geometry = GL_GEOMETRY_SHADER,
+        st_fragment = GL_FRAGMENT_SHADER,
+    };
+
+public:
+
     // 程序ID
     unsigned int ID;
 
     // 构造器读取并构建着色器
     Shader(const std::string &vertexPath, const std::string &fragmentPath);
+    Shader(const std::string &vertexPath, const std::string &geometryPath,
+           const std::string &fragmentPath);
     // 使用/激活程序
     void use() const;
     // uniform工具函数
