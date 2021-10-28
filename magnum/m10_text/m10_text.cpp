@@ -81,20 +81,22 @@ TextExample::TextExample(const Arguments& arguments):
                 .setWindowFlags(Configuration::WindowFlag::Resizable)},
         _cache{Vector2i{2048}, Vector2i{512}, 22}
 {
-    /* Load a TrueTypeFont plugin and open the font */
-    _font = _manager.loadAndInstantiate("TrueTypeFont");
-    if(!_font || !_font->openFile(RES_DIR "/SourceSansPro-Regular.ttf", 180.0f))
+    // 使用FreeType
+    _font = _manager.loadAndInstantiate("FreeTypeFont");
+    if(!_font || !_font->openFile(RES_DIR "/NotoSansMonoCJKsc-Regular.otf", 90.0f))
         Fatal{} << "Cannot open font file";
 
-    /* Glyphs we need to render everything */
+    // 渲染字形
     _font->fillGlyphCache(_cache,
                           "abcdefghijklmnopqrstuvwxyz"
                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                          "0123456789:-+,.!°ěäЗдравстуймиΓειασουκόμ ");
+                          "0123456789:-+,.!°ěäЗдравстуймиΓειασουκόμ 你好, 世界");
 
     /* Text that rotates using mouse wheel. Size relative to the window size
        (1/10 of it) -- if you resize the window, it gets bigger */
+    // 组合字形成纹理
     std::tie(_rotatingText, std::ignore) = Text::Renderer2D::render(*_font, _cache, 0.2f,
+                                                                    "你好, 世界!\n"
                                                                     "Hello, world!\n"
                                                                     "Ahoj, světe!\n"
                                                                     "Здравствуй, мир!\n"
